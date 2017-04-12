@@ -1,0 +1,19 @@
+version: '2.1'
+services:
+  bot:
+    build: .
+    command: python run.py
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:9.6.2-alpine
+    healthcheck:
+      test: ["CMD", "ping", "-c", "1", "db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
