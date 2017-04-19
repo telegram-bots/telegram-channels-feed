@@ -1,19 +1,41 @@
 version: '2.1'
 services:
   bot:
-    build: .
+    build: ./bot
     command: python run.py
     volumes:
-      - .:/code
-    ports:
-      - "8000:8000"
+      - ./updater:/code
     depends_on:
       db:
         condition: service_healthy
+  updater:
+    build: ./updater
+    command: python run.py
+    volumes:
+      - ./updater:/code
+    depends_on:
+      db:
+        condition: service_healthy
+      tg-cli:
+        condition: service_healthy
   db:
     image: postgres:9.6.2-alpine
+    volumes:
+      - ./storage:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "ping", "-c", "1", "db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  tg-cli:
+    image: luckydonald/tg-cli
+    volumes:
+      - ./storage:/telegram/data
+      - ./updater/tg-cli:/telegram
+    environment:
+      - TGCLI_VERSION=1222
+    healthcheck:
+      test: ["CMD", "ping", "-c", "1", "tg-cli"]
       interval: 30s
       timeout: 10s
       retries: 5

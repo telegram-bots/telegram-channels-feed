@@ -1,0 +1,9 @@
+default_profile = "default";
+
+
+default = {
+  config_directory = "/telegram/data";
+  test = false;
+  log_level = 2;
+  lua_script = "../handler.lua";
+};
