@@ -8,14 +8,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-  updater:
-    build: ./updater
-    command: python run.py
-    volumes:
-      - ./updater:/code
-    depends_on:
-      db:
-        condition: service_healthy
       tg-cli:
         condition: service_healthy
   db:
@@ -28,12 +20,10 @@ services:
       timeout: 10s
       retries: 5
   tg-cli:
-    image: luckydonald/tg-cli
+    build: ./tg-cli
+    command: ["/bin/telegram-cli", "--json", "-P", "4458", "--accept-any-tcp", "--disable-readline", "--config", "/telegram/config.cfg"]
     volumes:
       - ./storage:/telegram/data
-      - ./updater/tg-cli:/telegram
-    environment:
-      - TGCLI_VERSION=1222
     healthcheck:
       test: ["CMD", "ping", "-c", "1", "tg-cli"]
       interval: 30s

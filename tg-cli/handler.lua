@@ -1,4 +1,4 @@
-print(">>>>>>>>>>>>>>>>>>>>>CALLED AGAIN AND AGAIN<<<<<<<<<<<<<<<<<<<<<<<<<<")
+print(">>>>>>>>>>>>>>>>>>> INITIALIZED HANDLER <<<<<<<<<<<<<<<<<")
 
 function dl_cb (arg, data)
 end
