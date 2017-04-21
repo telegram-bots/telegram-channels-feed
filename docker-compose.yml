@@ -4,7 +4,7 @@ services:
     build: ./bot
     command: python run.py
     volumes:
-      - ./updater:/code
+      - ./bot:/code
     depends_on:
       db:
         condition: service_healthy
@@ -13,7 +13,7 @@ services:
   db:
     image: postgres:9.6.2-alpine
     volumes:
-      - ./storage:/var/lib/postgresql/data
+      - ./storage/db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "ping", "-c", "1", "db"]
       interval: 30s
@@ -23,7 +23,10 @@ services:
     build: ./tg-cli
     command: ["/bin/telegram-cli", "--json", "-P", "4458", "--accept-any-tcp", "--disable-readline", "--config", "/telegram/config.cfg"]
     volumes:
-      - ./storage:/telegram/data
+      - ./storage/tg-cli:/telegram/data
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "ping", "-c", "1", "tg-cli"]
       interval: 30s

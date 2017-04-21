@@ -16,5 +16,8 @@ print(">>>>>>>>>>> TABLES <<<<<<<<<<<<<<<")
 print(cur.fetchall())
 print(">>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<")
 
+cur.execute("SELECT * FROM newsqueue")
+print(cur.fetchall())
+
 cur.close()
 conn.close()
