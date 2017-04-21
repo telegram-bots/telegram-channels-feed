@@ -6,7 +6,7 @@ import os.path
 db_url = os.environ['DATABASE_URL']
 conn = psycopg2.connect(db_url)
 cur = conn.cursor()
-schema_file = 'sql/schema.sql'
+schema_file = '../resources/sql/schema.sql'
 
 print("IMPORTING SCHEMA")
 print("SCHEMA FILE EXISTS: " + str(os.path.isfile(schema_file)))
