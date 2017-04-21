@@ -1,23 +1,15 @@
-import psycopg2
-import os
+import logging.config
 
-# Запуск бота
-db_url = os.environ['DATABASE_URL']
-conn = psycopg2.connect(db_url)
-cur = conn.cursor()
+from src.bot import Bot
+from src.config import config
 
-cur.execute(
-    """SELECT table_name
-    FROM information_schema.tables
-    WHERE table_schema='public'
-    AND table_type='BASE TABLE';"""
-)
-print(">>>>>>>>>>> TABLES <<<<<<<<<<<<<<<")
-print(cur.fetchall())
-print(">>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<")
 
-cur.execute("SELECT * FROM newsqueue")
-print(cur.fetchall())
+def main():
+    logging.basicConfig(level=config['logging']['level'])
+    logging.getLogger("telegram.bot").setLevel(logging.ERROR)
+    logging.getLogger("telegram.ext").setLevel(logging.ERROR)
 
-cur.close()
-conn.close()
+    Bot().run()
+
+if __name__ == '__main__':
+    main()

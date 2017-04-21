@@ -2,8 +2,8 @@ import logging
 
 from telegram.ext import Updater
 
-from src.config import config, chat_purge_queue
-from src.handler import *
+# from src.config import config
+# from src.handler import *
 
 
 class Bot:
@@ -17,9 +17,9 @@ class Bot:
     def run(self):
         logging.info("Bot started")
 
-        self.dispatcher.add_handler(MessageHandler())
-        self.dispatcher.add_handler(CommandHandler())
-        self.dispatcher.add_handler(StatusHandler(chat_purge_queue.instance(self.updater.job_queue)))
+        # self.dispatcher.add_handler(MessageHandler())
+        # self.dispatcher.add_handler(CommandHandler())
+        # self.dispatcher.add_handler(StatusHandler(chat_purge_queue.instance(self.updater.job_queue)))
 
         if config['updates']['mode'] == 'polling':
             self.updater.start_polling()
