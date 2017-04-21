@@ -1,0 +1,14 @@
+[bot]
+token=
+name=ChannelsFeed
+
+[logging]
+level=INFO
+
+[updates]
+mode=polling
+host=
+port=
+url=
+key=
+cert=
