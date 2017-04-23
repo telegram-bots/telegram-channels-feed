@@ -34,8 +34,5 @@ for section, options in sections.items():
 from .db import DB
 db = DB(os.environ['DATABASE_URL'])
 
-from .repository import *
-subscription_repository = SubscriptionRepository()
-
 from .service import *
 subscription_service = SubscriptionService()

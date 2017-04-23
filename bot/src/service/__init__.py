@@ -1,1 +1,2 @@
 from .subscription_service import SubscriptionService
+from .channel_repository import ChannelRepository
