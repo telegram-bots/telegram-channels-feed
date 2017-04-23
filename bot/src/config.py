@@ -30,3 +30,12 @@ for section, options in sections.items():
                              "Option '{}' in section '{}' is missing!".format(option, section))
 
 
+# IOC
+from .db import DB
+db = DB(os.environ['DATABASE_URL'])
+
+from .repository import *
+subscription_repository = SubscriptionRepository()
+
+from .service import *
+subscription_service = SubscriptionService()

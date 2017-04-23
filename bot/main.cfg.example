@@ -1,6 +1,6 @@
 [bot]
 token=
-name=ChannelsFeed
+name=
 
 [logging]
 level=INFO

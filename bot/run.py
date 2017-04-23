@@ -1,7 +1,8 @@
+import logging
 import logging.config
 
-from src.bot import Bot
-from src.config import config
+from .src.bot import Bot
+from .src.config import config
 
 
 def main():

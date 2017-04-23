@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS Users (
 );
 
 CREATE TABLE IF NOT EXISTS Subscriptions (
-    user_id bigint not null,
-    channel_id bigint not null,
+    user_id int not null,
+    channel_id int not null,
     last_update timestamp
 );
 

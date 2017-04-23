@@ -24,6 +24,6 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends libreadline-
 WORKDIR /home/telegram
 ADD ./config.cfg /telegram/config.cfg
 RUN mkdir -p /telegram/data/data && chmod -R 777 /telegram/data
-#ADD ./handler.lua /telegram/handler.lua
+ADD ./handler.lua /telegram/handler.lua
 EXPOSE 4458
 ENTRYPOINT ["/bin/dumb-init", "--"]

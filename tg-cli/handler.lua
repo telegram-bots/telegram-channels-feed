@@ -1,4 +1,4 @@
-print(">>>>>>>>>>>>>>>>>>> STARTED HANDLER <<<<<<<<<<<<<<<<<")
+print("STARTED HANDLER")
 local encode_json = require("pgmoon.json").encode_json
 local pg = require("pgmoon").new({
     host = "db",
@@ -7,7 +7,7 @@ local pg = require("pgmoon").new({
     user = "postgres"
 })
 local conn = pg:connect()
-print(">>>>>>>>>>>>>>>>>>> INITIALISED HANDLER <<<<<<<<<<<<<<<<<")
+print("INITIALISED HANDLER")
 
 -- Sleep for given time
 function sleep (seconds)

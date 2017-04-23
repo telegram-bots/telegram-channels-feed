@@ -1,4 +1,5 @@
 FROM python:3.6.1-slim
+ENV CONFIG_PATH "./main.cfg"
 ENV DATABASE_URL "host=db dbname=postgres user=postgres"
 RUN mkdir /code
 WORKDIR /code
