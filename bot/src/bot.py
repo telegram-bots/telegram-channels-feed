@@ -2,8 +2,8 @@ import logging
 
 from telegram.ext import Updater
 
-from .config import config
-from .handler import *
+from src.config import config
+from src.handler import *
 
 
 class Bot:

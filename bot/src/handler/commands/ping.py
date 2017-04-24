@@ -1,4 +1,4 @@
-from .base import Base
+from . import Base
 
 
 class Ping(Base):

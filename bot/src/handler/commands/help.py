@@ -1,5 +1,5 @@
-from .base import Base
-from ...utils import read_to_string
+from . import Base
+from src.utils import read_to_string
 
 
 class Help(Base):

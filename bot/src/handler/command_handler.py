@@ -1,8 +1,8 @@
 from telegram import Update
 from telegram.ext import Handler
 
-from ..domain.command import Command
-from .commands import commands
+from src.domain.command import Command
+from src.handler.commands import commands
 
 
 class CommandHandler(Handler):

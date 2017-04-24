@@ -24,7 +24,7 @@ class DB:
 
     def __init_schema(self):
         logging.info("[DB] IMPORTING SCHEMA")
-        schema_file = '../resources/sql/schema.sql'
+        schema_file = 'resources/sql/schema.sql'
         with open(schema_file, 'r') as file:
             self.execute(lambda cur: cur.execute(file.read()))
         logging.info("[DB] SUCCESSFULLY IMPORTED")

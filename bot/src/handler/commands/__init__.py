@@ -1,7 +1,7 @@
 from .base import Base
-from .start import Start
 from .help import Help
 from .ping import Ping
+from .subscribe import Subscribe
 
 commands = {}
 for clazz in Base.__subclasses__():

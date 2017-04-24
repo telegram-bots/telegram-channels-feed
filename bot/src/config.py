@@ -34,5 +34,9 @@ for section, options in sections.items():
 from .db import DB
 db = DB(os.environ['DATABASE_URL'])
 
+from .tg_cli import TelegramCLI
+tg_cli = TelegramCLI(host='tg-cli', port=4458)
+tg_cli.connect()
+
 from .service import *
 subscription_service = SubscriptionService()

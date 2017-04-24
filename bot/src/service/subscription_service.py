@@ -1,6 +1,7 @@
 import logging
+import re
 
-from ..config import config, db
+from src.config import config, db, tg_cli
 
 
 class SubscriptionService:
@@ -11,15 +12,21 @@ class SubscriptionService:
         pass
 
     def subscribe(self, command):
+        channel_url = self.__parse_channel_url(command)
+        channel_telegram_id, channel_name = tg_cli.lookup_channel(channel_url)
         user_telegram_id = command.chat_id
-        channel_telegram_id = command.args[0]
-        channel_name = "#TODO"
+        tg_cli.subscribe_to_channel(channel_id=channel_telegram_id, user_id=user_telegram_id)
 
-        #return nothing
+        #SQL HERE
+
+        return channel_name
 
     def unsubscribe(self, command):
+        channel_url = self.__parse_channel_url(command)
+        channel_telegram_id, channel_name = tg_cli.lookup_channel(channel_url)
         user_telegram_id = command.chat_id
-        channel_telegram_id = command.args[0]
+
+        #SQL HERE
 
         #return nothing
 
@@ -27,3 +34,14 @@ class SubscriptionService:
         user_telegram_id = command.chat_id
 
         #return [(channel_name 1, channel_id 1), (channel_name 1, channel_id 1), ... (channel_name N, channel_id N))
+
+    def __parse_channel_url(self, command):
+        try:
+            url = re.search('(?:.*)(?:t.me\/|@)(.*)', command.args[0]).group(1).strip()
+
+            if url == '':
+                raise NameError()
+
+            return url
+        except IndexError:
+            raise NameError()
