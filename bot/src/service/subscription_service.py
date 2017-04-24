@@ -8,6 +8,7 @@ class SubscriptionService:
     """
     Subscriptions management
     """
+
     def __init__(self, db, tg_cli):
         self.db = db
         self.tg_cli = tg_cli
@@ -18,23 +19,25 @@ class SubscriptionService:
         channel_telegram_id, channel_name = self.tg_cli.lookup_channel(channel_url)
         self.tg_cli.subscribe_to_channel(channel_telegram_id)
 
-        #SQL HERE
+        # SQL HERE
 
         return channel_name
 
     def unsubscribe(self, command):
         user_telegram_id = command.chat_id
-        channel_url = self.__parse_channel_url(command)
-        channel_telegram_id, channel_name = self.tg_cli.lookup_channel(channel_url)
+        channel_id = int(command.args[0])
 
-        #SQL HERE
+        # SQL HERE
 
-        #return nothing
+        if True: # TODO Если это был последний пользователь, который был подписан на этот канал
+            self.tg_cli.unsubscribe_from_channel(channel_id)
+
+        return "TODO. Channel name from DB"
 
     def list_subscriptions(self, command):
         user_telegram_id = command.chat_id
 
-        #return [(channel_name 1, channel_id 1), (channel_name 1, channel_id 1), ... (channel_name N, channel_id N))
+        # return [(channel_name 1, channel_id 1), (channel_name 1, channel_id 1), ... (channel_name N, channel_id N))
 
     def __parse_channel_url(self, command):
         try:

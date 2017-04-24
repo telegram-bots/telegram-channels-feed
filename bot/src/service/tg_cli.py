@@ -50,6 +50,14 @@ class TelegramCLI:
         if json_data['ID'] != 'Ok':
             raise ConnectionError('Failed to subscribe: {0}'.format(json_data))
 
+    def unsubscribe_from_channel(self, channel_id):
+        command = '{"ID": "ChangeChatMemberStatus", "chat_id_": %d, "user_id_": %d, "status_": {"ID": "ChatMemberStatusLeft"}}'
+        response = self.__send_and_receive(command % (channel_id, self.user_id))
+        json_data = json.loads(response[0], encoding=encoding)
+
+        if json_data['ID'] != 'Ok':
+            raise ConnectionError('Failed to unsubscribe: {0}'.format(json_data))
+
     def __disconnect(self):
         if self.connected:
             self.socket.close()
