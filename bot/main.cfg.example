@@ -5,6 +5,18 @@ name=
 [logging]
 level=INFO
 
+[tg-cli]
+id=
+host=tg-cli
+port=4458
+
+[db]
+host=db
+port=5432
+name=postgres
+user=postgres
+password=
+
 [updates]
 mode=polling
 host=

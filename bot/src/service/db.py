@@ -3,8 +3,14 @@ import logging
 
 
 class DB:
-    def __init__(self, db_url):
-        self.conn = psycopg2.connect(db_url)
+    def __init__(self, config):
+        self.conn = psycopg2.connect(
+            host=config['host'],
+            port=config.getint('port'),
+            dbname=config['name'],
+            user=config['user'],
+            password=config['password']
+        )
         self.__init_schema()
 
     def __exit__(self, exc_type, exc_val, exc_tb):

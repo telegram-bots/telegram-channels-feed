@@ -1,30 +1,31 @@
 import logging
 import re
 
-from src.config import config, db, tg_cli
+from src.config import config
 
 
 class SubscriptionService:
     """
     Subscriptions management
     """
-    def __init__(self):
-        pass
+    def __init__(self, db, tg_cli):
+        self.db = db
+        self.tg_cli = tg_cli
 
     def subscribe(self, command):
-        channel_url = self.__parse_channel_url(command)
-        channel_telegram_id, channel_name = tg_cli.lookup_channel(channel_url)
         user_telegram_id = command.chat_id
-        tg_cli.subscribe_to_channel(channel_id=channel_telegram_id, user_id=user_telegram_id)
+        channel_url = self.__parse_channel_url(command)
+        channel_telegram_id, channel_name = self.tg_cli.lookup_channel(channel_url)
+        self.tg_cli.subscribe_to_channel(channel_telegram_id)
 
         #SQL HERE
 
         return channel_name
 
     def unsubscribe(self, command):
-        channel_url = self.__parse_channel_url(command)
-        channel_telegram_id, channel_name = tg_cli.lookup_channel(channel_url)
         user_telegram_id = command.chat_id
+        channel_url = self.__parse_channel_url(command)
+        channel_telegram_id, channel_name = self.tg_cli.lookup_channel(channel_url)
 
         #SQL HERE
 

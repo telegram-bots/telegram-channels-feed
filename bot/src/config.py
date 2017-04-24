@@ -7,6 +7,8 @@ encoding = 'utf-8'
 sections = {
     'bot': ['token', 'name'],
     'logging': ['level'],
+    'tg-cli': ['id', 'host', 'port'],
+    'db': ['host', 'port', 'name', 'user', 'password'],
     'updates': ['mode']
 }
 
@@ -31,12 +33,8 @@ for section, options in sections.items():
 
 
 # IOC
-from .db import DB
-db = DB(os.environ['DATABASE_URL'])
-
-from .tg_cli import TelegramCLI
-tg_cli = TelegramCLI(host='tg-cli', port=4458)
-tg_cli.connect()
-
 from .service import *
-subscription_service = SubscriptionService()
+db = DB(config['db'])
+tg_cli = TelegramCLI(config['tg-cli'])
+tg_cli.connect()
+subscription_service = SubscriptionService(db=db, tg_cli=tg_cli)
