@@ -40,4 +40,4 @@ tg_cli = TelegramCLI(config['tg-cli'])
 
 from .service import *
 subscriptions = Subscriptions()
-update_listener = UpdateListener(subscriptions=subscriptions)
+notifications = Notifications(subscriptions=subscriptions)

@@ -37,19 +37,22 @@ class Subscriptions:
 
         # return [(channel_name 1, channel_id 1), (channel_name 1, channel_id 1), ... (channel_name N, channel_id N))
 
-    def list_subscribers(self, channel_tg_id):
-        conn = db.connection()
-        cur = conn.cursor()
-
-        cur.execute("""
-                    SELECT * FROM Users WHERE id IN (
-                      SELECT user_id FROM Subscriptions WHERE channel_id = (
-                        SELECT id FROM Channels WHERE telegram_id = %s
-                      )
-                    )""",
-                    [channel_tg_id])
-
-        return cur.fetchall()
+    def get_subscription_data(self, channel_tg_id):
+        return db.get_lazy(
+            """
+            SELECT
+              ch.id AS channel_id,
+              ch.telegram_id AS channel_tg_id,
+              u.id AS user_id,
+              u.telegram_id AS user_tg_id,
+              sub.last_update AS sub_last_update,
+              ch.last_update as ch_last_update
+            FROM Channels AS ch
+            JOIN Subscriptions AS sub ON sub.channel_id = ch.id
+            JOIN Users AS u ON u.id = sub.user_id
+            WHERE ch.telegram_id = %s
+            """ % channel_tg_id
+        )
 
     def __parse_channel_url(self, command):
         try:

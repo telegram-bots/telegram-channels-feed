@@ -13,5 +13,7 @@ class Unsubscribe(Base):
         try:
             channel_name = subscriptions.unsubscribe(command)
             Unsubscribe.reply(bot, command, 'Successfully unsubscribed from "{}"'.format(channel_name))
+        except IndexError:
+            Unsubscribe.reply(bot, command, "That's not valid channel id. Try again.")
         except:
             Unsubscribe.reply(bot, command, "Failed to unsubscribe. Please try again later.")

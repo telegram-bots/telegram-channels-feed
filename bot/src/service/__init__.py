@@ -1,2 +1,2 @@
 from .subscriptions import Subscriptions
-from .update_listener import UpdateListener
+from .notifications import Notifications
