@@ -2,7 +2,7 @@ import logging
 
 from telegram.ext import Updater
 
-from src.config import config
+from src.config import config, update_listener
 from src.handler import *
 
 
@@ -18,6 +18,8 @@ class Bot:
         logging.info("Bot started")
 
         self.dispatcher.add_handler(CommandHandler())
+
+        update_listener.instance(self.updater.bot)
 
         if config['updates']['mode'] == 'polling':
             self.updater.start_polling()

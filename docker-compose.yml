@@ -2,7 +2,9 @@ version: '2.1'
 services:
   bot:
     build: ./bot
-    command: python run.py
+    command: ["python", "-u", "run.py"]
+    environment:
+      - PYTHONUNBUFFERED=0
     volumes:
       - ./bot:/code
     depends_on:

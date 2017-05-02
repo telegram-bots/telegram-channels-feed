@@ -1,5 +1,5 @@
 from . import Base
-from src.config import subscription_service
+from src.config import subscriptions
 
 
 class Unsubscribe(Base):
@@ -11,7 +11,7 @@ class Unsubscribe(Base):
             Unsubscribe.reply(bot, command, 'Groups currently are not supported!')
 
         try:
-            channel_name = subscription_service.unsubscribe(command)
+            channel_name = subscriptions.unsubscribe(command)
             Unsubscribe.reply(bot, command, 'Successfully unsubscribed from "{}"'.format(channel_name))
         except:
             Unsubscribe.reply(bot, command, "Failed to unsubscribe. Please try again later.")

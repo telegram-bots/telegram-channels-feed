@@ -33,8 +33,11 @@ for section, options in sections.items():
 
 
 # IOC
-from .service import *
+from .db import DB
+from .tg_cli import TelegramCLI
 db = DB(config['db'])
 tg_cli = TelegramCLI(config['tg-cli'])
-tg_cli.connect()
-subscription_service = SubscriptionService(db=db, tg_cli=tg_cli)
+
+from .service import *
+subscriptions = Subscriptions()
+update_listener = UpdateListener(subscriptions=subscriptions)

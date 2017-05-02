@@ -1,4 +1,5 @@
 import random
+import threading
 
 
 def random_element(xlist):
@@ -28,3 +29,11 @@ def read_to_string(file_path):
     with open(file_path, 'r') as file:
         data = file.read()
     return data
+
+
+def threaded(fn):
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+    return wrapper

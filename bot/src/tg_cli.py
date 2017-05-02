@@ -6,32 +6,19 @@ from src.config import encoding
 
 
 class TelegramCLI:
+    EOL = '\n'
+    BUFFER_SIZE = 8192
+
     def __init__(self, config):
         self.config = config
         self.user_id = config.getint('id')
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.retries = 0
         self.connected = False
-        self.EOL = '\n'
-        self.BUFFER_SIZE = 8192
+        self.__connect()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.__disconnect()
-
-    def connect(self):
-        if self.retries > 5:
-            logging.error('[tg-cli] Maximum number of retries reached. Stopping')
-            return
-
-        try:
-            logging.info('[tg-cli] Connecting to {0}:{1}'.format(self.config['host'], self.config['port']))
-            self.socket.connect((self.config['host'], self.config.getint('port')))
-            self.connected = True
-            logging.info('[tg-cli] Connected')
-        except socket.error as ex:
-            logging.warn('[tg-cli] Failed to connect : {0}'.format(ex))
-            time.sleep(5)
-            self.connect()
 
     def lookup_channel(self, channel_url):
         command = '{"ID": "SearchPublicChat", "username_": "%s"}'
@@ -57,6 +44,21 @@ class TelegramCLI:
 
         if json_data['ID'] != 'Ok':
             raise ConnectionError('Failed to unsubscribe: {0}'.format(json_data))
+
+    def __connect(self):
+        if self.retries > 5:
+            logging.error('[tg-cli] Maximum number of retries reached. Stopping')
+            return
+
+        try:
+            logging.info('[tg-cli] Connecting to {0}:{1}'.format(self.config['host'], self.config['port']))
+            self.socket.connect((self.config['host'], self.config.getint('port')))
+            self.connected = True
+            logging.info('[tg-cli] Connected')
+        except socket.error as ex:
+            logging.warn('[tg-cli] Failed to connect : {0}'.format(ex))
+            time.sleep(5)
+            self.__connect()
 
     def __disconnect(self):
         if self.connected:
