@@ -29,6 +29,18 @@ class DB:
         conn.commit()
         cur.close()
 
+    def execute_and_get(self, callback):
+        conn = self.connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        callback(cur)
+
+        conn.commit()
+        result = cur.fetchone()
+        cur.close()
+
+        return result
+
     def get_all(self, query):
         conn = self.connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)

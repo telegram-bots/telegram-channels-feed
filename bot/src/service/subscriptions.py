@@ -1,7 +1,7 @@
 import logging
 import re
 
-from src.config import db, tg_cli
+from src.config import db, tg_cli, user_repository, channel_repository, subscription_repository
 
 
 class Subscriptions:
@@ -12,12 +12,24 @@ class Subscriptions:
         pass
 
     def subscribe(self, command):
-        user_telegram_id = command.chat_id
         channel_url = self.__parse_channel_url(command)
-        channel_telegram_id, channel_name = tg_cli.lookup_channel(channel_url)
-        tg_cli.subscribe_to_channel(channel_telegram_id)
 
-        # SQL HERE
+        user = user_repository.get_or_create(tg_id=command.chat_id)
+
+        channel = channel_repository.get(channel_url)
+        if channel is None:
+            channel_tg_id, channel_name = tg_cli.lookup_channel(channel_url)
+            tg_cli.subscribe_to_channel(channel_tg_id)
+            channel_id = channel_repository.create_or_update(
+                tg_id=channel_tg_id,
+                url=channel_url,
+                name=channel_name
+            )
+        else:
+            channel_id = channel['id']
+            channel_name = channel['name']
+
+        subscription_repository.create(user_id=user['id'], channel_id=channel_id)
 
         return channel_name
 
