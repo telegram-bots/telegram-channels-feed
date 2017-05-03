@@ -3,14 +3,14 @@ import json
 import select
 import psycopg2
 import psycopg2.extensions
+import pprint
+from datetime import datetime
 
 from src.config import db
 from src.utils import threaded
 
 
 class Notifications:
-    CHANNEL = "events"
-
     """
     Listen to updates and send them
     """
@@ -55,13 +55,21 @@ class Handler:
     def handle(self, update):
         """Handle channel update"""
         logging.debug("Received update: {}".format(update))
+        print(update)
 
         data = self.subscriptions.get_subscription_data(update.channel_tg_id)
-        print(data)
-        print(list(data))
+        for row in data:
+            if row['ch_last_update'] is not None and row['ch_last_update'] >= update.timestamp:
+                break
+            if row['sub_last_update'] is not None and row['sub_last_update'] >= update.timestamp:
+                continue
 
-        # for _, tg_id in subscribers:
-        #     self.bot.send_message(chat_id=tg_id, text=str(update.raw))
+            self.bot.send_message(chat_id=row['user_tg_id'], text=pprint.pformat(update.raw, indent=4))
+            #SQL: Обновляем timestamp у subscription_last_update
+            #SQL: Удаляем сообщение из БД
+
+        #SQL: Обновляем timestamp у channel_last_update
+        print(list(data))
 
 
 class Update:
@@ -71,13 +79,15 @@ class Update:
         payload = json.loads(data.payload)['data']
         self.channel_tg_id = payload['channel_telegram_id']
         self.message_id = payload['message_id']
+        self.timestamp = datetime.strptime(payload['timestamp'], "%Y-%m-%dT%H:%M:%S")
         self.raw = payload['raw']
 
     def __str__(self):
-        return "Pid: {}, DB Channel: {}, TG Channel ID: {}, Message ID: {}, Raw: {}".\
+        return "Pid: {}, DB Channel: {}, TG Channel ID: {}, Message ID: {}, Timestamp: {}, Raw: {}".\
             format(self.pid,
                    self.channel,
                    self.channel_tg_id,
                    self.message_id,
+                   self.timestamp,
                    self.raw
                    )

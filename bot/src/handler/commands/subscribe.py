@@ -11,8 +11,9 @@ class Subscribe(Base):
             Subscribe.reply(bot, command, 'Groups currently are not supported!')
 
         try:
-            channel_name = subscriptions.subscribe(command)
-            Subscribe.reply(bot, command, 'Successfully subscribed to "{}"'.format(channel_name))
+            channel = subscriptions.subscribe(command)
+            Subscribe.reply(bot, command,
+                            'Successfully subscribed to "{}" (@{})'.format(channel['name'], channel['url']))
         except NameError:
             Subscribe.reply(bot, command, "Illegal channel url! Type /help")
         except:

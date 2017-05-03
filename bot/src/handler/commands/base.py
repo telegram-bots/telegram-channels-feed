@@ -1,3 +1,4 @@
+from telegram import ParseMode
 import logging
 from abc import ABC, abstractmethod
 
@@ -12,7 +13,7 @@ class Base(ABC):
         pass
 
     @staticmethod
-    def reply(bot, command, message):
+    def reply(bot, command, message, parse_mode=None):
         logging.debug("[Chat %s %s command] %s: %s" %
                       (command.chat_type,
                        command.chat_id,
@@ -21,4 +22,5 @@ class Base(ABC):
 
         bot.send_message(chat_id=command.chat_id,
                          reply_to_message_id=command.message.message_id,
-                         text=message)
+                         text=message,
+                         parse_mode=parse_mode)

@@ -3,6 +3,7 @@ from .help import Help
 from .ping import Ping
 from .subscribe import Subscribe
 from .unsubscribe import Unsubscribe
+from .list import List
 
 commands = {}
 for clazz in Base.__subclasses__():

@@ -26,13 +26,13 @@ function connect()
 end
 
 -- Save message to DB
-function save_message(chat_id, msg_id, msg)
+function save_message(chat_id, msg_id, timestamp, msg)
     if conn == nil then
         connect()
     end
 
-    local query = "INSERT INTO Notifications (channel_telegram_id, message_id, raw)"..
-            "VALUES(" .. chat_id .. ", " .. msg_id .. ", " .. msg .. ")"
+    local query = "INSERT INTO Notifications (channel_telegram_id, message_id, timestamp, raw) "..
+            "VALUES(" .. chat_id .. ", " .. msg_id .. ", '" .. timestamp .. "', " .. msg .. ")"
     local res = pg:query(query)
     while res ~= true do
         print("Error saving to DB")
@@ -74,7 +74,12 @@ function tdcli_update_callback (data)
         local msg = data.message_
 
         if (msg.is_post_ == true) then
-            save_message(msg.chat_id_, msg.id_, encode_json(msg))
+            save_message(
+                msg.chat_id_,
+                msg.id_,
+                os.date('%Y-%m-%d %H:%M:%S', msg.date_),
+                encode_json(msg)
+            )
         elseif msg.content_.ID == "MessageText" then
             if msg.content_.text_:lower() == "ping" then
                 reply(msg.chat_id_, msg.id_, "pong")

@@ -6,7 +6,7 @@ class ChannelRepository:
         self.conn = db.connection()
 
     def get(self, url):
-        return db.get_one("SELECT * FROM Channels WHERE url = %s".format(url))
+        return db.get_one("SELECT * FROM Channels WHERE url = '%s'" % url)
 
     def create_or_update(self, tg_id, url, name):
         return db.execute_and_get(lambda cur: cur.execute(
@@ -22,3 +22,6 @@ class ChannelRepository:
             """,
             {'tg_id': tg_id, 'url': url, 'name': name}
         ))
+
+    def remove(self, id_):
+        db.execute("DELETE FROM Channels WHERE id = %s" % id_)

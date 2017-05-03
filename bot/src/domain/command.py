@@ -1,3 +1,6 @@
+import re
+
+
 class Command:
     """
     Special class for message which contains command
@@ -8,6 +11,7 @@ class Command:
         self.message = message
         self.name = Command.parse_name(message)
         self.args = Command.parse_args(message)
+        self.channel_url = Command.parse_channel_url(self.args)
 
     def is_private(self):
         """Returns True if chat type is private.
@@ -36,3 +40,16 @@ class Command:
         :return: List of command args
         """
         return message.text.split()[1:]
+
+    @staticmethod
+    def parse_channel_url(args):
+        """
+        Parses channel URL from args or None if empty
+        :param args: Parsed args
+        :return: URL of channel
+        """
+        try:
+            url = re.search('(?:.*)(?:t.me\/|@)(.*)', args[0]).group(1).strip()
+            return None if url == '' else url
+        except IndexError:
+            return None

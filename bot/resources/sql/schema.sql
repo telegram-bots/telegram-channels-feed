@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS Channels (
   name        VARCHAR         NOT NULL,
   last_update TIMESTAMP
 );
-CREATE INDEX url_index
+CREATE INDEX IF NOT EXISTS url_index
   ON Channels (url);
 
 CREATE SEQUENCE IF NOT EXISTS user_id_seq;
@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS Subscriptions (
 CREATE TABLE IF NOT EXISTS Notifications (
   channel_telegram_id BIGINT NOT NULL,
   message_id          BIGINT NOT NULL,
+  timestamp           TIMESTAMP NOT NULL,
   raw                 JSON   NOT NULL
 );
 

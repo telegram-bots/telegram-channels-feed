@@ -1,6 +1,3 @@
-import logging
-import re
-
 from src.config import db, tg_cli, user_repository, channel_repository, subscription_repository
 
 
@@ -12,42 +9,46 @@ class Subscriptions:
         pass
 
     def subscribe(self, command):
-        channel_url = self.__parse_channel_url(command)
+        if command.channel_url is None:
+            raise NameError('Invalid channel url!')
 
-        user = user_repository.get_or_create(tg_id=command.chat_id)
-
-        channel = channel_repository.get(channel_url)
+        channel = channel_repository.get(url=command.channel_url)
         if channel is None:
-            channel_tg_id, channel_name = tg_cli.lookup_channel(channel_url)
+            channel_tg_id, channel_name = tg_cli.lookup_channel(command.channel_url)
             tg_cli.subscribe_to_channel(channel_tg_id)
-            channel_id = channel_repository.create_or_update(
+            channel = channel_repository.create_or_update(
                 tg_id=channel_tg_id,
-                url=channel_url,
+                url=command.channel_url,
                 name=channel_name
             )
-        else:
-            channel_id = channel['id']
-            channel_name = channel['name']
 
-        subscription_repository.create(user_id=user['id'], channel_id=channel_id)
+        user = user_repository.get_or_create(telegram_id=command.chat_id)
 
-        return channel_name
+        subscription_repository.create(user_id=user['id'], channel_id=channel['id'])
+
+        return channel
 
     def unsubscribe(self, command):
-        user_telegram_id = command.chat_id
-        channel_id = int(command.args[0])
+        if command.channel_url is None:
+            raise NameError('Invalid channel url!')
 
-        # SQL HERE
+        user = user_repository.get(telegram_id=command.chat_id)
+        if user is None:
+            raise IndexError("No such user!")
 
-        if True: # TODO Если это был последний пользователь, который был подписан на этот канал
-            tg_cli.unsubscribe_from_channel(channel_id)
+        channel = channel_repository.get(command.channel_url)
+        if channel is None:
+            raise IndexError("No such channel!")
 
-        return "TODO. Channel name from DB"
+        subs_left = subscription_repository.remove(user_id=user['id'], channel_id=channel['id'])
+        if subs_left == 0:
+            tg_cli.unsubscribe_from_channel(channel['telegram_id'])
+            channel_repository.remove(channel['id'])
 
-    def list_subscriptions(self, command):
-        user_telegram_id = command.chat_id
+        return channel
 
-        # return [(channel_name 1, channel_id 1), (channel_name 1, channel_id 1), ... (channel_name N, channel_id N))
+    def list(self, command):
+        return subscription_repository.list(user_telegram_id=command.chat_id)
 
     def get_subscription_data(self, channel_tg_id):
         return db.get_lazy(
@@ -65,14 +66,3 @@ class Subscriptions:
             WHERE ch.telegram_id = %s
             """ % channel_tg_id
         )
-
-    def __parse_channel_url(self, command):
-        try:
-            url = re.search('(?:.*)(?:t.me\/|@)(.*)', command.args[0]).group(1).strip()
-
-            if url == '':
-                raise NameError()
-
-            return url
-        except IndexError:
-            raise NameError()

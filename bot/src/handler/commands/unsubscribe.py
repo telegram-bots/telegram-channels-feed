@@ -11,9 +11,12 @@ class Unsubscribe(Base):
             Unsubscribe.reply(bot, command, 'Groups currently are not supported!')
 
         try:
-            channel_name = subscriptions.unsubscribe(command)
-            Unsubscribe.reply(bot, command, 'Successfully unsubscribed from "{}"'.format(channel_name))
+            channel = subscriptions.unsubscribe(command)
+            Unsubscribe.reply(bot, command,
+                              'Successfully unsubscribed from "{}" (@{})'.format(channel['name'], channel['url']))
+        except NameError:
+            Unsubscribe.reply(bot, command, "Illegal channel url! Type /help")
         except IndexError:
-            Unsubscribe.reply(bot, command, "That's not valid channel id. Try again.")
+            Unsubscribe.reply(bot, command, "You are not subscribed to this channel.")
         except:
             Unsubscribe.reply(bot, command, "Failed to unsubscribe. Please try again later.")
