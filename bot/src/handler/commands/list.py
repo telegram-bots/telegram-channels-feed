@@ -24,8 +24,8 @@ class List(Base):
         counter = 1
         for sub in subscriptions:
             result.append(
-                "{}. [{}] *{}* ([{}](https://t.me/{}))"
-                    .format(counter, sub['id'], sub['name'], "@" + sub['url'], sub['url']))
+                "{}. *{}* ([{}](https://t.me/{}))"
+                    .format(counter, sub['name'], "@" + sub['url'], sub['url']))
             counter += 1
 
         return "\n".join(result)

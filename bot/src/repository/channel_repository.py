@@ -24,4 +24,4 @@ class ChannelRepository:
         ))
 
     def remove(self, id_):
-        db.execute("DELETE FROM Channels WHERE id = %s" % id_)
+        db.execute(lambda cur: cur.execute("DELETE FROM Channels WHERE id = %s" % id_))

@@ -1,6 +1,5 @@
 from .base import Base
 from .help import Help
-from .ping import Ping
 from .subscribe import Subscribe
 from .unsubscribe import Unsubscribe
 from .list import List

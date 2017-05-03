@@ -27,7 +27,7 @@ class SubscriptionRepository:
             WHERE channel_id = %(c_id)s;
             """,
             {'u_id': user_id, 'c_id': channel_id}
-        ))
+        ))[0]
 
     def list(self, user_telegram_id):
         return db.get_all(
