@@ -8,22 +8,20 @@ from src.config import subscriptions
 class List(Base):
     name = 'list'
 
-    @staticmethod
-    def execute(bot, command):
+    def execute(self, command):
         if not command.is_private():
-            List.reply(bot, command, 'Groups currently are not supported!')
+            self.reply(command, 'Groups currently are not supported!')
 
         try:
             subs = subscriptions.list(command)
-            List.reply(bot, command, List.format_to_string(subs), parse_mode=ParseMode.MARKDOWN)
+            self.reply(command, self.__format_to_string(subs), parse_mode=ParseMode.MARKDOWN)
         except GenericSubscriptionError as e:
-            List.reply(bot, command, str(e))
+            self.reply(command, str(e))
 
-    @staticmethod
-    def format_to_string(subscriptions):
+    def __format_to_string(self, subs):
         result = []
         counter = 1
-        for sub in subscriptions:
+        for sub in subs:
             result.append(
                 "{}. *{}* ([{}](https://t.me/{}))"
                     .format(counter, sub['name'], "@" + sub['url'], sub['url']))

@@ -24,11 +24,14 @@ class CommandHandler(Handler):
         return self.callback(dispatcher.bot, update, **optional_args)
 
     def handle(self, bot, update):
-        command = Command(update.message)
+        data = Command(update.message)
 
         try:
-            self.commands[command.name](bot, command)
+            command = self.commands[data.name]
+            if command.bot is None:
+                command.bot = bot
+            command.execute(data)
         except (KeyError, IndexError, ValueError):
-            bot.send_message(chat_id=command.chat_id,
-                             reply_to_message_id=command.message.message_id,
+            bot.send_message(chat_id=data.chat_id,
+                             reply_to_message_id=data.message.message_id,
                              text='Invalid command! Type /help')
