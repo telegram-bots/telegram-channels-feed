@@ -1,9 +1,10 @@
-import logging
 from telegram import ParseMode
 from . import Base
+from src.exception.subscription_exception import GenericSubscriptionError
 from src.config import subscriptions
 
 
+# TODO. Добавить пагинацию и возможность нажать кнопку отписаться прямо там же, напротив каждого пункта из списка
 class List(Base):
     name = 'list'
 
@@ -15,8 +16,8 @@ class List(Base):
         try:
             subs = subscriptions.list(command)
             List.reply(bot, command, List.format_to_string(subs), parse_mode=ParseMode.MARKDOWN)
-        except:
-            List.reply(bot, command, "Failed to display your subscriptions. Please try again later.")
+        except GenericSubscriptionError as e:
+            List.reply(bot, command, str(e))
 
     @staticmethod
     def format_to_string(subscriptions):

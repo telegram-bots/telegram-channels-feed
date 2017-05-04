@@ -5,17 +5,29 @@ class SubscriptionRepository:
     def __init__(self):
         self.conn = db.connection()
 
-    def create(self, user_id, channel_id):
+    def create(self, user_id: int, channel_id: int):
+        """
+        Create subscription relation
+        :param user_id: ID of user
+        :param channel_id: ID of channel
+        :throws psycopg2.IntegrityError if subscription already exists
+        """
         db.execute(lambda cur: cur.execute(
             """
             INSERT INTO Subscriptions (user_id, channel_id)
             VALUES (%(user_id)s, %(channel_id)s)
-            ON CONFLICT DO NOTHING;
             """,
             {'user_id': user_id, 'channel_id': channel_id}
         ))
 
-    def remove(self, user_id, channel_id):
+    def remove(self, user_id: int, channel_id: int) -> int:
+        """
+        Remove subscription relation
+        :param user_id: ID of user
+        :param channel_id: ID of channel
+        :rtype: int
+        :return How many left subscribers to this channel
+        """
         return db.execute_and_get(lambda cur: cur.execute(
             """
             DELETE FROM Subscriptions
@@ -29,7 +41,13 @@ class SubscriptionRepository:
             {'u_id': user_id, 'c_id': channel_id}
         ))[0]
 
-    def list(self, user_telegram_id):
+    def list(self, user_telegram_id: int) -> list:
+        """
+        Get list of channels user subscribed to
+        :param user_telegram_id: Telegram ID of user
+        :rtype: list
+        :return: List of subscriptions in format [{id:, name:, url:}]
+        """
         return db.get_all(
             """
             SELECT ch.id, ch.url, ch.name

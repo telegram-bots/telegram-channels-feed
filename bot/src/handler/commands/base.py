@@ -1,4 +1,3 @@
-from telegram import ParseMode
 import logging
 from abc import ABC, abstractmethod
 

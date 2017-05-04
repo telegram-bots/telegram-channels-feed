@@ -51,5 +51,5 @@ class Command:
         try:
             url = re.search('(?:.*)(?:t.me\/|@)(.*)', args[0]).group(1).strip()
             return None if url == '' else url
-        except IndexError:
+        except:
             return None

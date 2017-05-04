@@ -3,6 +3,8 @@ import json
 import select
 import psycopg2
 import psycopg2.extensions
+from telegram.error import NetworkError
+from retry import retry
 import pprint
 from datetime import datetime
 
@@ -64,12 +66,16 @@ class Handler:
             if row['sub_last_update'] is not None and row['sub_last_update'] >= update.timestamp:
                 continue
 
-            self.bot.send_message(chat_id=row['user_tg_id'], text=pprint.pformat(update.raw, indent=4))
+            self.__send_message(chat_id=row['user_tg_id'], data=update.raw)
             #SQL: Обновляем timestamp у subscription_last_update
             #SQL: Удаляем сообщение из БД
 
         #SQL: Обновляем timestamp у channel_last_update
         print(list(data))
+
+    @retry(NetworkError, tries=5, delay=10)
+    def __send_message(self, chat_id, data):
+        self.bot.send_message(chat_id=chat_id, text=pprint.pformat(data, indent=4))
 
 
 class Update:

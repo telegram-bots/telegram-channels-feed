@@ -1,5 +1,6 @@
 from . import Base
 from src.config import subscriptions
+from src.exception.subscription_exception import GenericSubscriptionError
 
 
 class Unsubscribe(Base):
@@ -14,9 +15,5 @@ class Unsubscribe(Base):
             channel = subscriptions.unsubscribe(command)
             Unsubscribe.reply(bot, command,
                               'Successfully unsubscribed from "{}" (@{})'.format(channel['name'], channel['url']))
-        except NameError:
-            Unsubscribe.reply(bot, command, "Illegal channel url! Type /help")
-        except IndexError:
-            Unsubscribe.reply(bot, command, "You are not subscribed to this channel.")
-        except:
-            Unsubscribe.reply(bot, command, "Failed to unsubscribe. Please try again later.")
+        except GenericSubscriptionError as e:
+            Unsubscribe.reply(bot, command, str(e))

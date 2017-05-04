@@ -14,9 +14,7 @@ class CommandHandler(Handler):
         if isinstance(update, Update) and update.message:
             message = update.message
 
-            return message.text \
-                   and message.text.startswith('/') \
-                   and Command.parse_name(message) in self.commands
+            return message.text and message.text.startswith('/')
         else:
             return False
 
@@ -30,7 +28,7 @@ class CommandHandler(Handler):
 
         try:
             self.commands[command.name](bot, command)
-        except (IndexError, ValueError):
+        except (KeyError, IndexError, ValueError):
             bot.send_message(chat_id=command.chat_id,
                              reply_to_message_id=command.message.message_id,
                              text='Invalid command! Type /help')
