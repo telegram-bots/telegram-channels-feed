@@ -29,45 +29,41 @@ class DB:
         conn.commit()
         cur.close()
 
-    def execute_and_get(self, callback):
+    def get_all(self, callback, mapper=None):
         conn = self.connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         callback(cur)
 
-        conn.commit()
-        result = cur.fetchone()
+        result = [dict(row) if mapper is None else mapper(dict(row)) for row in cur.fetchall()]
         cur.close()
 
         return result
 
-    def get_all(self, query):
+    def get_lazy(self, callback, mapper=None):
         conn = self.connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        cur.execute(query)
-        result = [dict(row) for row in cur.fetchall()]
-        cur.close()
 
-        return result
-
-    def get_lazy(self, query):
-        conn = self.connection()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        cur.execute(query)
+        callback(cur)
 
         for row in cur:
-            yield dict(row)
+            yield dict(row) if mapper is None else mapper(dict(row))
 
         cur.close()
 
-    def get_one(self, query):
+    def get_one(self, callback, mapper=None):
         conn = self.connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        cur.execute(query)
+
+        callback(cur)
+
         result = cur.fetchone()
         cur.close()
 
-        return result
+        if result is None:
+            return None
+
+        return mapper(result) if mapper is not None else result
 
     def __init_schema(self):
         logging.info("[DB] IMPORTING SCHEMA")

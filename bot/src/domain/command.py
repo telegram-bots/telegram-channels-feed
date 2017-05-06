@@ -53,3 +53,6 @@ class Command:
             return None if url == '' else url
         except:
             return None
+
+    def __str__(self):
+        return str(self.__dict__)

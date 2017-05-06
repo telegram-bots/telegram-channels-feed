@@ -1,4 +1,6 @@
 from src.config import db
+from src.domain.entities import Subscription
+from typing import Generator
 
 
 class SubscriptionRepository:
@@ -28,7 +30,7 @@ class SubscriptionRepository:
         :rtype: int
         :return How many left subscribers to this channel
         """
-        return db.execute_and_get(lambda cur: cur.execute(
+        return db.get_one(lambda cur: cur.execute(
             """
             DELETE FROM Subscriptions
             WHERE
@@ -41,19 +43,25 @@ class SubscriptionRepository:
             {'u_id': user_id, 'c_id': channel_id}
         ))[0]
 
-    def list(self, user_telegram_id: int) -> list:
-        """
-        Get list of channels user subscribed to
-        :param user_telegram_id: Telegram ID of user
-        :rtype: list
-        :return: List of subscriptions in format [{id:, name:, url:}]
-        """
-        return db.get_all(
-            """
-            SELECT ch.id, ch.url, ch.name
-            FROM Subscriptions AS sub
-            JOIN Users AS u ON u.id = sub.user_id
-            JOIN Channels AS ch ON ch.id = sub.channel_id
-            WHERE u.telegram_id = %d
-            """ % user_telegram_id
+    def all(self, channel_telegram_id: int) -> Generator[Subscription, None, None]:
+        return db.get_lazy(
+            lambda cur: cur.execute(
+                """
+                SELECT
+                 ch.id AS channel_id,
+                 ch.telegram_id AS channel_telegram_id,
+                 ch.url AS channel_url,
+                 ch.name AS channel_name,
+                 ch.last_update as channel_last_update,
+                 u.id AS user_id,
+                 u.telegram_id AS user_telegram_id,
+                 sub.last_update AS last_update
+                FROM Channels AS ch
+                JOIN Subscriptions AS sub ON sub.channel_id = ch.id
+                JOIN Users AS u ON u.id = sub.user_id
+                WHERE ch.telegram_id = %s
+                """,
+                [channel_telegram_id]
+            ),
+            mapper=Subscription
         )

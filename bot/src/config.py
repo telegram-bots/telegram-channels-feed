@@ -1,36 +1,47 @@
 # Config
-import configparser
+from configparser import ConfigParser
 import os
 
-encoding = 'utf-8'
 
-sections = {
-    'bot': ['token', 'name'],
-    'logging': ['level'],
-    'tg-cli': ['id', 'host', 'port'],
-    'db': ['host', 'port', 'name', 'user', 'password'],
-    'updates': ['mode']
-}
+def load() -> ConfigParser:
+    config_path = os.environ['CONFIG_PATH']
+    config = ConfigParser()
+    config.read(config_path, encoding=encoding)
+    return config
 
 
-def getlist(self, section, option, type=str):
-    return list(map(lambda o: type(o), config.get(section, option).split(',')))
+def extend(conf: ConfigParser) -> ConfigParser:
+    def getlist(self, section, option, type=str):
+        return list(map(lambda o: type(o), conf.get(section, option).split(',')))
 
-configparser.ConfigParser.getlist = getlist
+    ConfigParser.getlist = getlist
 
-config_path = os.environ['CONFIG_PATH']
-config = configparser.ConfigParser()
-config.read(config_path, encoding=encoding)
+    return conf
 
-for section, options in sections.items():
-    if not config.has_section(section):
-        raise ValueError("Config is not valid!", 
-                         "Section '{}' is missing!".format(section))
-    for option in options:
-        if not config.has_option(section, option):
+
+def validate(conf: ConfigParser) -> ConfigParser:
+    sections = {
+        'bot': ['token', 'name'],
+        'logging': ['level'],
+        'tg-cli': ['id', 'host', 'port'],
+        'db': ['host', 'port', 'name', 'user', 'password'],
+        'updates': ['mode']
+    }
+
+    for section, options in sections.items():
+        if not conf.has_section(section):
             raise ValueError("Config is not valid!",
-                             "Option '{}' in section '{}' is missing!".format(option, section))
+                             "Section '{}' is missing!".format(section))
+        for option in options:
+            if not conf.has_option(section, option):
+                raise ValueError("Config is not valid!",
+                                 "Option '{}' in section '{}' is missing!".format(option, section))
 
+    return conf
+
+
+encoding = 'utf-8'
+config = validate(extend(load()))
 
 # IOC
 from .db import DB

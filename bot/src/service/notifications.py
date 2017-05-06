@@ -59,19 +59,19 @@ class Handler:
         logging.debug("Received update: {}".format(update))
         print(update)
 
-        data = self.subscriptions.get_subscription_data(update.channel_tg_id)
-        for row in data:
-            if row['ch_last_update'] is not None and row['ch_last_update'] >= update.timestamp:
+        subs = self.subscriptions.all(update.channel_tg_id)
+        for sub in subs:
+            if sub.channel.last_update is not None and sub.channel.last_update >= update.timestamp:
                 break
-            if row['sub_last_update'] is not None and row['sub_last_update'] >= update.timestamp:
+            if sub.last_update is not None and sub.last_update >= update.timestamp:
                 continue
 
-            self.__send_message(chat_id=row['user_tg_id'], data=update.raw)
+            self.__send_message(chat_id=sub.user.telegram_id, data=update.raw)
             #SQL: Обновляем timestamp у subscription_last_update
             #SQL: Удаляем сообщение из БД
 
         #SQL: Обновляем timestamp у channel_last_update
-        print(list(data))
+        print(list(subs))
 
     @retry(NetworkError, tries=5, delay=10)
     def __send_message(self, chat_id, data):
@@ -89,11 +89,4 @@ class Update:
         self.raw = payload['raw']
 
     def __str__(self):
-        return "Pid: {}, DB Channel: {}, TG Channel ID: {}, Message ID: {}, Timestamp: {}, Raw: {}".\
-            format(self.pid,
-                   self.channel,
-                   self.channel_tg_id,
-                   self.message_id,
-                   self.timestamp,
-                   self.raw
-                   )
+        return str(self.__dict__)

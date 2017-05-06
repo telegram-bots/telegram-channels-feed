@@ -1,32 +1,43 @@
 import logging
 from psycopg2 import IntegrityError
 from src.exception.subscription_exception import *
-from src.config import db, tg_cli, user_repository, channel_repository, subscription_repository
+from src.config import tg_cli, user_repository, channel_repository, subscription_repository
+from typing import List
+from src.domain.command import Command
+from src.domain.entities import Channel, Subscription
+from typing import Generator
 
 
 class Subscriptions:
     """
     Subscriptions management
     """
+    def __init__(self):
+        pass
 
-    def subscribe(self, command):
+    def subscribe(self, command: Command) -> Channel:
+        """
+        Handle subscription request
+        :param command: Command entity
+        :return Channel data
+        """
         if command.channel_url is None:
             raise IllegalChannelUrlError()
 
         try:
             channel = channel_repository.get(command.channel_url)
             if channel is None:
-                channel_tg_id, channel_name = tg_cli.lookup_channel(command.channel_url)
-                tg_cli.subscribe_to_channel(channel_tg_id)
+                telegram_id, name = tg_cli.lookup_channel(command.channel_url)
+                tg_cli.subscribe_to_channel(telegram_id)
                 channel = channel_repository.create_or_update(
-                    tg_id=channel_tg_id,
+                    telegram_id=telegram_id,
                     url=command.channel_url,
-                    name=channel_name
+                    name=name
                 )
 
             user = user_repository.get_or_create(telegram_id=command.chat_id)
 
-            subscription_repository.create(user_id=user['id'], channel_id=channel['id'])
+            subscription_repository.create(user_id=user.id, channel_id=channel.id)
 
             return channel
         except IntegrityError:
@@ -35,7 +46,12 @@ class Subscriptions:
             logging.error("Failed to subscribe", e)
             raise SubscribeError()
 
-    def unsubscribe(self, command):
+    def unsubscribe(self, command: Command) -> Channel:
+        """
+        Handle unsubscription request
+        :param command: Command entity
+        :return Channel data
+        """
         if command.channel_url is None:
             raise IllegalChannelUrlError()
 
@@ -48,10 +64,10 @@ class Subscriptions:
             if channel is None:
                 raise NotSubscribedError()
 
-            subs_left = subscription_repository.remove(user_id=user['id'], channel_id=channel['id'])
+            subs_left = subscription_repository.remove(user_id=user.id, channel_id=channel.id)
             if subs_left == 0:
-                tg_cli.unsubscribe_from_channel(channel['telegram_id'])
-                channel_repository.remove(channel['url'])
+                tg_cli.unsubscribe_from_channel(channel.telegram_id)
+                channel_repository.remove(channel.url)
 
             return channel
         except UnsubscribeError as e:
@@ -60,26 +76,17 @@ class Subscriptions:
             logging.error("Failed to unsubscribe", e)
             raise UnsubscribeError()
 
-    def list(self, command):
+    def list(self, command: Command) -> List[Channel]:
+        """
+        Handle channels list request
+        :param command: Command entity
+        :return: List of channels user subscribed to
+        """
         try:
-            return subscription_repository.list(user_telegram_id=command.chat_id)
+            return channel_repository.list_subscribed(user_telegram_id=command.chat_id)
         except Exception as e:
             logging.error("Failed to list subscriptions", e)
             raise SubscriptionsListError()
 
-    def get_subscription_data(self, channel_tg_id):
-        return db.get_lazy(
-            """
-            SELECT
-              ch.id AS channel_id,
-              ch.telegram_id AS channel_tg_id,
-              u.id AS user_id,
-              u.telegram_id AS user_tg_id,
-              sub.last_update AS sub_last_update,
-              ch.last_update as ch_last_update
-            FROM Channels AS ch
-            JOIN Subscriptions AS sub ON sub.channel_id = ch.id
-            JOIN Users AS u ON u.id = sub.user_id
-            WHERE ch.telegram_id = %s
-            """ % channel_tg_id
-        )
+    def all(self, channel_telegram_id: int) -> Generator[Subscription, None, None]:
+        return subscription_repository.all(channel_telegram_id)

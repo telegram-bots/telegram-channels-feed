@@ -3,6 +3,7 @@ import time
 import logging
 import socket
 from src.config import encoding
+from typing import Tuple
 
 
 class TelegramCLI:
@@ -20,7 +21,7 @@ class TelegramCLI:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.__disconnect()
 
-    def lookup_channel(self, channel_url):
+    def lookup_channel(self, channel_url: str) -> Tuple[str, str]:
         command = '{"ID": "SearchPublicChat", "username_": "%s"}'
         response = self.__send_and_receive(command % channel_url)
         json_data = json.loads(response[0], encoding=encoding)
@@ -29,21 +30,21 @@ class TelegramCLI:
 
         return channel_id, channel_name
 
-    def subscribe_to_channel(self, channel_id):
+    def subscribe_to_channel(self, id_: int):
         command = '{"ID": "AddChatMember", "chat_id_": %d, "user_id_": %d, "forward_limit_": 2}'
-        response = self.__send_and_receive(command % (channel_id, self.user_id))
+        response = self.__send_and_receive(command % (id_, self.user_id))
         json_data = json.loads(response[0], encoding=encoding)
 
         if json_data['ID'] != 'Ok':
-            raise ConnectionError('Failed to subscribe: {0}'.format(json_data))
+            raise ConnectionError(f"Failed to subscribe: {json_data}")
 
-    def unsubscribe_from_channel(self, channel_id):
+    def unsubscribe_from_channel(self, id_: int):
         command = '{"ID": "ChangeChatMemberStatus", "chat_id_": %d, "user_id_": %d, "status_": {"ID": "ChatMemberStatusLeft"}}'
-        response = self.__send_and_receive(command % (channel_id, self.user_id))
+        response = self.__send_and_receive(command % (id_, self.user_id))
         json_data = json.loads(response[0], encoding=encoding)
 
         if json_data['ID'] != 'Ok':
-            raise ConnectionError('Failed to unsubscribe: {0}'.format(json_data))
+            raise ConnectionError(f"Failed to unsubscribe: {json_data}")
 
     def __connect(self):
         if self.retries > 5:
@@ -51,12 +52,12 @@ class TelegramCLI:
             return
 
         try:
-            logging.info('[tg-cli] Connecting to {0}:{1}'.format(self.config['host'], self.config['port']))
+            logging.info(f"[tg-cli] Connecting to {self.config['host']}:{self.config['port']}")
             self.socket.connect((self.config['host'], self.config.getint('port')))
             self.connected = True
             logging.info('[tg-cli] Connected')
-        except socket.error as ex:
-            logging.warn('[tg-cli] Failed to connect : {0}'.format(ex))
+        except socket.error as e:
+            logging.warn(f"[tg-cli] Failed to connect : {str(e)}")
             time.sleep(5)
             self.__connect()
 
