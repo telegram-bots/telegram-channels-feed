@@ -1,3 +1,5 @@
+from sqlalchemy.sql import text
+
 from src.config import db
 from src.domain.entities import User
 
@@ -10,10 +12,10 @@ class UserRepository:
         :rtype: dict
         :return: Found user or None
         """
-        return db.get_one(
-            lambda cur: cur.execute("SELECT * FROM USERS WHERE telegram_id = %s", [telegram_id]),
-            mapper=User
-        )
+        return db.session\
+            .query(User) \
+            .filter(User.telegram_id == telegram_id) \
+            .first()
 
     def get_or_create(self, telegram_id: int) -> User:
         """
@@ -22,17 +24,17 @@ class UserRepository:
         :rtype: dict
         :return: User
         """
-        return db.get_one(
-            lambda cur: cur.execute(
+        return db.session \
+            .query(User) \
+            .from_statement(text(
                 """
                 INSERT INTO Users (telegram_id)
-                VALUES (%(telegram_id)s)
+                VALUES (:telegram_id)
                 ON CONFLICT DO NOTHING;
                 SELECT *
                 FROM Users
-                WHERE telegram_id = %(telegram_id)s;
-                """,
-                {'telegram_id': telegram_id}
-            ),
-            mapper=User
-        )
+                WHERE telegram_id = :telegram_id;
+                """
+            )) \
+            .params(telegram_id=telegram_id) \
+            .first()

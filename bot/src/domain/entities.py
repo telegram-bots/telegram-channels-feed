@@ -1,30 +1,36 @@
-class Channel:
-    def __init__(self, data):
-        self.id = data['id']
-        self.telegram_id = data['telegram_id']
-        self.url = data['url']
-        self.name = data['name']
-        self.last_update = data['last_update']
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from sqlalchemy.schema import Column, ForeignKey, PrimaryKeyConstraint
+from sqlalchemy.types import Integer, String, BigInteger, TIMESTAMP
 
-    def __str__(self):
-        return str(self.__dict__)
+Base = declarative_base()
 
 
-class User:
-    def __init__(self, data):
-        self.id = data['id']
-        self.telegram_id = data['telegram_id']
+class Channel(Base):
+    __tablename__ = 'channels'
 
-    def __str__(self):
-        return str(self.__dict__)
+    id = Column(Integer, primary_key=True)
+    telegram_id = Column(BigInteger, nullable=False, unique=True)
+    url = Column(String, nullable=False, index=True)
+    name = Column(String, nullable=False)
+    last_update = Column(TIMESTAMP, nullable=True)
 
 
-class Subscription:
-    def __init__(self, data):
-        self.user = User({k.replace('user_', ''): v for k, v in data.items() if 'user_' in k})
-        self.channel = Channel({k.replace('channel_', ''): v for k, v in data.items() if 'channel_' in k})
-        self.last_update = data['last_update']
+class User(Base):
+    __tablename__ = 'users'
 
-    def __str__(self):
-        return str(self.__dict__)
+    id = Column(Integer, primary_key=True)
+    telegram_id = Column(BigInteger, nullable=False, unique=True)
+
+
+class Subscription(Base):
+    __tablename__ = 'subscriptions'
+    __table_args__ = (PrimaryKeyConstraint('channel_id', 'user_id'), )
+
+    channel_id = Column(Integer, ForeignKey('channels.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    last_update = Column(TIMESTAMP, nullable=True)
+    channel = relationship(Channel)
+    user = relationship(User)
+
 

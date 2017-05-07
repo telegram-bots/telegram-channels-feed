@@ -1,11 +1,13 @@
 import logging
+
 from abc import ABC, abstractmethod
-from src.config import subscriptions
-from src.exception.subscription_exception import GenericSubscriptionError
-from src.utils import read_to_string
 from telegram.parsemode import ParseMode
 from typing import List as TList
+
+from src.config import subscriptions
 from src.domain.entities import Channel
+from src.exception.subscription_exception import GenericSubscriptionError
+from src.utils import read_to_string
 
 
 class Base(ABC):

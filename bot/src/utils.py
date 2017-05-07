@@ -1,6 +1,5 @@
 import random
 import threading
-from functools import wraps
 
 
 def random_element(xlist):
@@ -37,13 +36,4 @@ def threaded(fn):
         thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
         thread.start()
         return thread
-    return wrapper
-
-
-def transactional(db):
-    def wrapper(fn):
-        @wraps(fn)
-        def wrapped(self, *f_args, **f_kwargs):
-            return db.execute_in_transaction(callback=lambda: fn(self, *f_args, **f_kwargs))
-        return wrapped
     return wrapper

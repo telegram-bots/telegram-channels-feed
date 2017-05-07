@@ -1,9 +1,11 @@
 import json
-import time
 import logging
+
 import socket
-from src.config import encoding
+import time
 from typing import Tuple
+
+from src.config import encoding
 
 
 class TelegramCLI:

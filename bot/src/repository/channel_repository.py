@@ -1,6 +1,8 @@
+from sqlalchemy.sql import text
+from typing import List
+
 from src.config import db
 from src.domain.entities import Channel
-from typing import List
 
 
 class ChannelRepository:
@@ -10,10 +12,10 @@ class ChannelRepository:
         :param url: Searchable url of channel
         :return: Found channel or None
         """
-        return db.get_one(
-            lambda cur: cur.execute("SELECT * FROM Channels WHERE url = %s", [url]),
-            mapper=Channel
-        )
+        return db.session \
+            .query(Channel) \
+            .filter(Channel.url == url) \
+            .first()
 
     def create_or_update(self, telegram_id: int, url: str, name: str) -> Channel:
         """
@@ -23,47 +25,50 @@ class ChannelRepository:
         :param name: Name of channel
         :return: Existing or just updated channel
         """
-        return db.get_one(
-            lambda cur: cur.execute(
+        return db.session \
+            .query(Channel) \
+            .from_statement(text(
                 """
                 INSERT INTO Channels (telegram_id, url, name)
-                VALUES (%(telegram_id)s, %(url)s, %(name)s)
+                VALUES (:telegram_id, :url, :name)
                 ON CONFLICT (telegram_id)
                 DO UPDATE
-                SET url = %(url)s, name = %(name)s;
+                SET url = :url, name = :name;
                 SELECT *
                 FROM channels 
-                WHERE telegram_id = %(telegram_id)s;
-                """,
-                {'telegram_id': telegram_id, 'url': url, 'name': name}
-            ),
-            mapper=Channel
-        )
+                WHERE telegram_id = :telegram_id;
+                """
+            )) \
+            .params(telegram_id=telegram_id, url=url, name=name) \
+            .first()
 
     def remove(self, url: str):
         """
         Remove channel by it's url if exists
         :param url: URL of channel
         """
-        db.execute(lambda cur: cur.execute("DELETE FROM Channels WHERE url = %s", [url]))
+        db.session \
+            .query(Channel) \
+            .filter(Channel.url == url) \
+            .delete()
 
     def list_subscribed(self, user_telegram_id: int) -> List[Channel]:
-        """
-        Get list of channels user subscribed to
-        :param user_telegram_id: Telegram ID of user
-        :rtype: List[Channel]
-        :return: List of channels
-        """
-        return db.get_all(
-            lambda cur: cur.execute(
-                """
-                SELECT ch.id, ch.telegram_id, ch.url, ch.name, ch.last_update
-                FROM Subscriptions AS sub
-                JOIN Users AS u ON u.id = sub.user_id
-                JOIN Channels AS ch ON ch.id = sub.channel_id
-                WHERE u.telegram_id = %s
-                """,
-                [user_telegram_id]
-            ),
-            mapper=Channel
-        )
+            """
+            Get list of channels user subscribed to
+            :param user_telegram_id: Telegram ID of user
+            :rtype: List[Channel]
+            :return: List of channels
+            """
+            return db.session \
+                .query(Channel) \
+                .from_statement(text(
+                    """
+                    SELECT ch.id, ch.telegram_id, ch.url, ch.name, ch.last_update
+                    FROM Subscriptions AS sub
+                    JOIN Users AS u ON u.id = sub.user_id
+                    JOIN Channels AS ch ON ch.id = sub.channel_id
+                    WHERE u.telegram_id = :user_telegram_id
+                    """
+                )) \
+                .params(user_telegram_id=user_telegram_id) \
+                .all()

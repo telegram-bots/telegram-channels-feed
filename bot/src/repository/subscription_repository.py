@@ -1,6 +1,7 @@
+from typing import Generator
+
 from src.config import db
 from src.domain.entities import Subscription
-from typing import Generator
 
 
 class SubscriptionRepository:
@@ -9,15 +10,9 @@ class SubscriptionRepository:
         Create subscription relation
         :param user_id: ID of user
         :param channel_id: ID of channel
-        :throws psycopg2.IntegrityError if subscription already exists
+        :throws sqlalchemy.exc.InvalidRequestError if subscription already exists
         """
-        db.execute(lambda cur: cur.execute(
-            """
-            INSERT INTO Subscriptions (user_id, channel_id)
-            VALUES (%(user_id)s, %(channel_id)s)
-            """,
-            {'user_id': user_id, 'channel_id': channel_id}
-        ))
+        db.session.add(Subscription(user_id=user_id, channel_id=channel_id))
 
     def remove(self, user_id: int, channel_id: int) -> int:
         """
@@ -27,18 +22,16 @@ class SubscriptionRepository:
         :rtype: int
         :return How many left subscribers to this channel
         """
-        return db.get_one(lambda cur: cur.execute(
-            """
-            DELETE FROM Subscriptions
-            WHERE
-              user_id = %(u_id)s
-              AND channel_id = %(c_id)s;
-            SELECT COUNT(*)
-            FROM Subscriptions
-            WHERE channel_id = %(c_id)s;
-            """,
-            {'u_id': user_id, 'c_id': channel_id}
-        ))[0]
+        db.session \
+            .query(Subscription) \
+            .filter(Subscription.user_id == user_id) \
+            .filter(Subscription.channel_id == channel_id) \
+            .delete()
+
+        return db.session\
+            .query(Subscription)\
+            .filter(Subscription.channel_id == channel_id)\
+            .count()
 
     def all(self, channel_telegram_id: int) -> Generator[Subscription, None, None]:
         return db.get_lazy(

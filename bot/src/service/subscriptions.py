@@ -1,12 +1,13 @@
 import logging
-from psycopg2 import IntegrityError
-from src.exception.subscription_exception import *
-from src.config import db, tg_cli, user_repository, channel_repository, subscription_repository
+
+from sqlalchemy.exc import IntegrityError
+from typing import Generator
 from typing import List
+
+from src.config import db, tg_cli, user_repository, channel_repository, subscription_repository
 from src.domain.command import Command
 from src.domain.entities import Channel, Subscription
-from src.utils import transactional
-from typing import Generator
+from src.exception.subscription_exception import *
 
 
 class Subscriptions:
@@ -16,7 +17,6 @@ class Subscriptions:
     def __init__(self):
         pass
 
-    @transactional(db)
     def subscribe(self, command: Command) -> Channel:
         """
         Handle subscription request
@@ -26,7 +26,9 @@ class Subscriptions:
         if command.channel_url is None:
             raise IllegalChannelUrlError()
 
-        try:
+        def callback():
+            user = user_repository.get_or_create(telegram_id=command.chat_id)
+
             channel = channel_repository.get(command.channel_url)
             if channel is None:
                 telegram_id, name = tg_cli.lookup_channel(command.channel_url)
@@ -37,18 +39,18 @@ class Subscriptions:
                     name=name
                 )
 
-            user = user_repository.get_or_create(telegram_id=command.chat_id)
-
             subscription_repository.create(user_id=user.id, channel_id=channel.id)
 
             return channel
+
+        try:
+            return db.execute_in_transaction(callback)
         except IntegrityError:
             raise AlreadySubscribedError()
         except Exception as e:
             logging.error(f"Failed to subscribe: {e}")
             raise SubscribeError()
 
-    @transactional(db)
     def unsubscribe(self, command: Command) -> Channel:
         """
         Handle unsubscription request
@@ -58,7 +60,7 @@ class Subscriptions:
         if command.channel_url is None:
             raise IllegalChannelUrlError()
 
-        try:
+        def callback():
             user = user_repository.get(telegram_id=command.chat_id)
             if user is None:
                 raise NotSubscribedError()
@@ -73,8 +75,11 @@ class Subscriptions:
                 channel_repository.remove(channel.url)
 
             return channel
-        except UnsubscribeError as e:
-            raise e
+
+        try:
+            return db.execute_in_transaction(callback)
+        except UnsubscribeError:
+            raise
         except Exception as e:
             logging.error(f"Failed to unsubscribe: {e}")
             raise UnsubscribeError()

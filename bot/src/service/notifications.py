@@ -1,14 +1,12 @@
-import logging
 import json
-import select
-import psycopg2
-import psycopg2.extensions
-from telegram.error import NetworkError
-from retry import retry
-import pprint
-from datetime import datetime
+import logging
 
-from src.config import db
+import pprint
+import select
+from datetime import datetime
+from retry import retry
+from telegram.error import NetworkError
+
 from src.utils import threaded
 
 
@@ -18,13 +16,13 @@ class Notifications:
     """
     def __init__(self, subscriptions):
         self.subscriptions = subscriptions
-        self.conn = db.connection()
-        self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+        # self.conn = db.connection()
+        # self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
     def instance(self, bot):
-        handler = Handler(bot=bot, subscriptions=self.subscriptions)
-        listener = Listener(conn=self.conn, handler=handler)
-        listener.listen()
+        # handler = Handler(bot=bot, subscriptions=self.subscriptions)
+        # listener = Listener(conn=self.conn, handler=handler)
+        # listener.listen()
 
         return self
 
@@ -39,8 +37,8 @@ class Listener:
     @threaded
     def listen(self):
         """Listen to a channel."""
-        cursor = self.conn.cursor()
-        cursor.execute("LISTEN %s;" % self.CHANNEL)
+        # cursor = self.conn.cursor()
+        # cursor.execute("LISTEN %s;" % self.CHANNEL)
 
         while True:
             if select.select([self.conn], [], [], 1) != ([], [], []):
