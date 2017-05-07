@@ -2,6 +2,7 @@ import logging
 
 import csv
 import os
+import os.path
 
 from abc import ABC, abstractmethod
 from telegram.parsemode import ParseMode
@@ -43,7 +44,7 @@ class Start(Base):
 
 class Help(Base):
     name = 'help'
-    text = read_to_string('resources/info/help.txt')
+    text = read_to_string(os.path.join('resources', 'info', 'help.txt'))
 
     def execute(self, command):
         self.reply(command, self.text)

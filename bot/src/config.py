@@ -1,13 +1,18 @@
 # Config
 import os
+import os.path
 from configparser import ConfigParser
 
 
 def load() -> ConfigParser:
-    config_path = os.environ['CONFIG_PATH']
-    config = ConfigParser()
-    config.read(config_path, encoding=encoding)
-    return config
+    app_config = ConfigParser()
+    app_config.read(os.path.join('resources', 'application.conf'), encoding=encoding)
+
+    user_app_config = os.getenv('CONFIG_PATH', './application.conf')
+    if os.path.exists(user_app_config) and os.path.isfile(user_app_config):
+        app_config.read(user_app_config, encoding=encoding)
+
+    return app_config
 
 
 def extend(conf: ConfigParser) -> ConfigParser:
@@ -22,7 +27,6 @@ def extend(conf: ConfigParser) -> ConfigParser:
 def validate(conf: ConfigParser) -> ConfigParser:
     sections = {
         'bot': ['token', 'name'],
-        'logging': ['level'],
         'tg-cli': ['id', 'host', 'port'],
         'db': ['host', 'port', 'name', 'user', 'password'],
         'updates': ['mode']
