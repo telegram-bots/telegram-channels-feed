@@ -1,3 +1,4 @@
+import logging
 from telegram import Update
 from telegram.ext import Handler
 
@@ -28,6 +29,7 @@ class CommandHandler(Handler):
 
         try:
             command = self.commands[data.name]
+            logging.debug(f"Incoming command: {data}")
             if command.bot is None:
                 command.bot = bot
             command.execute(data)

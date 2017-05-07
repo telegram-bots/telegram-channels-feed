@@ -24,7 +24,7 @@ class Base(ABC):
         pass
 
     def reply(self, command, text, parse_mode=None, disable_web_page_preview=True):
-        logging.debug(f"[Chat {command.chat_type} {command.chat_id} command]: {text}")
+        logging.debug(f"Reply to command [{command}]: {text}")
 
         self.bot.send_message(
             chat_id=command.chat_id,

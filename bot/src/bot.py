@@ -17,7 +17,6 @@ class Bot:
     def run(self):
         logging.info("Bot started")
 
-        self.dispatcher.add_handler(MessageHandler())
         self.dispatcher.add_handler(CommandHandler())
 
         notifications.instance(self.updater.bot)
