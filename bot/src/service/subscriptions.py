@@ -71,6 +71,7 @@ class Subscriptions:
 
             subs_left = subscription_repository.remove(user_id=user.id, channel_id=channel.id)
             if subs_left == 0:
+                tg_cli.lookup_channel(channel.url)
                 tg_cli.unsubscribe_from_channel(channel.telegram_id)
                 channel_repository.remove(channel.url)
 
