@@ -3,9 +3,6 @@ from src.domain.entities import User
 
 
 class UserRepository:
-    def __init__(self):
-        self.conn = db.connection()
-
     def get(self, telegram_id: int) -> User:
         """
         Find user by his telegram_id

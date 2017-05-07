@@ -4,9 +4,6 @@ from typing import Generator
 
 
 class SubscriptionRepository:
-    def __init__(self):
-        self.conn = db.connection()
-
     def create(self, user_id: int, channel_id: int):
         """
         Create subscription relation

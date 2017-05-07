@@ -4,9 +4,6 @@ from typing import List
 
 
 class ChannelRepository:
-    def __init__(self):
-        self.conn = db.connection()
-
     def get(self, url: str) -> Channel:
         """
         Find channel by it's url

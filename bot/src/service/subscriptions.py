@@ -1,10 +1,11 @@
 import logging
 from psycopg2 import IntegrityError
 from src.exception.subscription_exception import *
-from src.config import tg_cli, user_repository, channel_repository, subscription_repository
+from src.config import db, tg_cli, user_repository, channel_repository, subscription_repository
 from typing import List
 from src.domain.command import Command
 from src.domain.entities import Channel, Subscription
+from src.utils import transactional
 from typing import Generator
 
 
@@ -15,6 +16,7 @@ class Subscriptions:
     def __init__(self):
         pass
 
+    @transactional(db)
     def subscribe(self, command: Command) -> Channel:
         """
         Handle subscription request
@@ -43,9 +45,10 @@ class Subscriptions:
         except IntegrityError:
             raise AlreadySubscribedError()
         except Exception as e:
-            logging.error("Failed to subscribe", e)
+            logging.error(f"Failed to subscribe: {e}")
             raise SubscribeError()
 
+    @transactional(db)
     def unsubscribe(self, command: Command) -> Channel:
         """
         Handle unsubscription request
@@ -73,7 +76,7 @@ class Subscriptions:
         except UnsubscribeError as e:
             raise e
         except Exception as e:
-            logging.error("Failed to unsubscribe", e)
+            logging.error(f"Failed to unsubscribe: {e}")
             raise UnsubscribeError()
 
     def list(self, command: Command) -> List[Channel]:
@@ -85,7 +88,7 @@ class Subscriptions:
         try:
             return channel_repository.list_subscribed(user_telegram_id=command.chat_id)
         except Exception as e:
-            logging.error("Failed to list subscriptions", e)
+            logging.error(f"Failed to list subscriptions: {e}")
             raise SubscriptionsListError()
 
     def all(self, channel_telegram_id: int) -> Generator[Subscription, None, None]:
