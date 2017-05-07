@@ -10,7 +10,7 @@ class CommandHandler(Handler):
         super(CommandHandler, self).__init__(self.handle)
         self.commands = commands
 
-    def check_update(self, update):
+    def check_update(self, update) -> bool:
         if isinstance(update, Update) and update.message:
             message = update.message
 

@@ -1,12 +1,12 @@
 from sqlalchemy.sql import text
-from typing import List
+from typing import List, Optional
 
 from src.config import db
 from src.domain.entities import Channel
 
 
 class ChannelRepository:
-    def get(self, url: str) -> Channel:
+    def get(self, url: str) -> Optional[Channel]:
         """
         Find channel by it's url
         :param url: Searchable url of channel

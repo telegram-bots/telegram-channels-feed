@@ -3,7 +3,7 @@ import logging
 
 import socket
 import time
-from typing import Tuple
+from typing import Tuple, List
 
 from src.config import encoding
 
@@ -76,6 +76,6 @@ class TelegramCLI:
         self.socket.sendall((command + self.EOL).encode(encoding))
         time.sleep(0.5)
 
-    def __send_and_receive(self, command):
+    def __send_and_receive(self, command) -> List[str]:
         self.__send(command)
         return self.socket.recv(self.BUFFER_SIZE).decode(encoding).strip().split(self.EOL)[1:]

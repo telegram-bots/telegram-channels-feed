@@ -2,10 +2,11 @@ from sqlalchemy.sql import text
 
 from src.config import db
 from src.domain.entities import User
+from typing import Optional
 
 
 class UserRepository:
-    def get(self, telegram_id: int) -> User:
+    def get(self, telegram_id: int) -> Optional[User]:
         """
         Find user by his telegram_id
         :param telegram_id: User telegram_id

@@ -2,7 +2,7 @@ import logging
 
 from functools import wraps
 from sqlalchemy.engine import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql import text
 from typing import Any, Generator
 
@@ -20,7 +20,7 @@ class DB:
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    def session(self):
+    def session(self) -> Session:
         return self.session
 
     def execute_in_transaction(self, callback) -> Any:
