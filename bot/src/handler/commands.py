@@ -1,5 +1,8 @@
 import logging
 
+import csv
+import os
+
 from abc import ABC, abstractmethod
 from telegram.parsemode import ParseMode
 from typing import List as TList
@@ -31,6 +34,13 @@ class Base(ABC):
         )
 
 
+class Start(Base):
+    name = 'start'
+
+    def execute(self, command):
+        pass
+
+
 class Help(Base):
     name = 'help'
     text = read_to_string('resources/info/help.txt')
@@ -53,7 +63,10 @@ class List(Base):
         except GenericSubscriptionError as e:
             self.reply(command, str(e))
 
-    def __format_to_string(self, channels: TList[Channel]):
+    def __format_to_string(self, channels: TList[Channel]) -> str:
+        if len(channels) == 0:
+            return "You don't have active subscriptions."
+
         result = []
         counter = 1
         for ch in channels:
@@ -63,6 +76,28 @@ class List(Base):
             counter += 1
 
         return "\n".join(result)
+
+
+class Export(Base):
+    name = 'export'
+
+    def execute(self, command):
+        rows = subscriptions.list(command)
+        if len(rows) == 0:
+            self.reply(command, "You don't have active subscriptions.")
+
+        file = f"{command.chat_id}_export.csv"
+        self.__create_csv(file, subscriptions.list(command))
+        self.bot.send_document(chat_id=command.chat_id,
+                               document=open(file, 'rb'))
+        os.remove(file)
+
+    def __create_csv(self, file: str, rows: TList[Channel]):
+        with open(file, 'x', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['SHORT_URL', 'URL', 'TITLE'])
+            for row in rows:
+                writer.writerow([f"@{row.url}", f"https://t.me/{row.url}", row.name])
 
 
 class Subscribe(Base):
