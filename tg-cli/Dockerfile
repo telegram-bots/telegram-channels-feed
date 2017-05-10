@@ -2,7 +2,7 @@ FROM debian:jessie-slim
 RUN useradd telegram && mkdir -p /home/telegram/.telegram-cli/ && chown telegram /home/telegram/.telegram-cli
 ENV TGCLI_VERSION 1222
 # This could be even smaller if we disable Python (there's a bug preventing the configure flag from working currently)
-RUN apt-get update -y && apt-get install -y --no-install-recommends libreadline-dev libconfig-dev libssl-dev lua5.2 liblua5.2-dev libevent-dev libjansson-dev \
+RUN apt-get update -y && apt-get install -y --no-install-recommends netcat libreadline-dev libconfig-dev libssl-dev lua5.2 liblua5.2-dev libevent-dev libjansson-dev \
     libpython-dev make libbsd0 curl ca-certificates git gcc unzip && \
     curl -L "http://luarocks.org/releases/luarocks-2.4.2.tar.gz" -o ./luarocks-2.4.2.tar.gz && \
     tar -xzvf luarocks-2.4.2.tar.gz && \
@@ -22,8 +22,11 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends libreadline-
     chmod +x /bin/dumb-init /bin/telegram-cli && \
     apt-get purge -y ca-certificates curl gcc unzip git && apt-get autoremove -y && apt-get clean my room
 WORKDIR /home/telegram
-ADD ./config.cfg /telegram/config.cfg
+ADD config.cfg /telegram/config.cfg
+ADD handler.lua /telegram/handler.lua
 RUN mkdir -p /telegram/data/data && chmod -R 777 /telegram/data
-ADD ./handler.lua /telegram/handler.lua
 EXPOSE 4458
+COPY docker-healthcheck /usr/local/bin/
+HEALTHCHECK CMD ["docker-healthcheck"]
 ENTRYPOINT ["/bin/dumb-init", "--"]
+CMD ["/bin/telegram-cli", "--json", "-P", "4458", "--accept-any-tcp", "--disable-readline", "--config", "/telegram/config.cfg"]

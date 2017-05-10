@@ -23,7 +23,7 @@ class TelegramCLI:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.__disconnect()
 
-    def lookup_channel(self, channel_url: str) -> Tuple[str, str]:
+    def lookup_channel(self, channel_url: str) -> Tuple[int, str]:
         command = '{"ID": "SearchPublicChat", "username_": "%s"}'
         response = self.__send_and_receive(command % channel_url)
         json_data = json.loads(response[0], encoding=encoding)
@@ -38,7 +38,7 @@ class TelegramCLI:
         json_data = json.loads(response[0], encoding=encoding)
 
         if json_data['ID'] != 'Ok':
-            raise ConnectionError(f"Failed to subscribe: {json_data}")
+            raise ConnectionError(f"[tg-cli] Failed to subscribe: {json_data}")
 
     def unsubscribe_from_channel(self, id_: int):
         command = '{"ID": "ChangeChatMemberStatus", "chat_id_": %d, "user_id_": %d, "status_": {"ID": "ChatMemberStatusLeft"}}'
@@ -46,7 +46,7 @@ class TelegramCLI:
         json_data = json.loads(response[0], encoding=encoding)
 
         if json_data['ID'] != 'Ok':
-            raise ConnectionError(f"Failed to unsubscribe: {json_data}")
+            raise ConnectionError(f"[tg-cli] Failed to unsubscribe: {json_data}")
 
     def __connect(self):
         if self.retries > 5:
@@ -70,7 +70,7 @@ class TelegramCLI:
 
     def __send(self, command):
         if not self.connected:
-            raise ConnectionError('Not connected to tg-cli!')
+            raise ConnectionError('[tg-cli] Not connected to tg-cli!')
         if self.EOL in command:
             command = str.join(' ', command.strip(self.EOL))
         self.socket.sendall((command + self.EOL).encode(encoding))

@@ -2,16 +2,30 @@ import logging
 import logging.config
 import os
 import os.path
+from argparse import ArgumentParser
 from configparser import ConfigParser
 
 from src.bot import Bot
-from src.config import encoding
+from src.config import encoding, db
 
 
 def main():
     setup_logging()
 
-    Bot().run()
+    if is_init():
+        init()
+    else:
+        Bot().run()
+
+
+def is_init():
+    parser = ArgumentParser(description="Is init mode")
+    parser.add_argument('-i', '--init', action='store_true')
+    return parser.parse_args().i
+
+
+def init():
+    db.init()
 
 
 def setup_logging():

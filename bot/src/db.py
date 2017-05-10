@@ -20,6 +20,14 @@ class DB:
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
+    def init(self):
+        logging.info("[db] IMPORTING SCHEMA")
+        schema_file = 'resources/sql/schema.sql'
+        with open(schema_file, 'r') as file:
+            self.session.execute(text(file.read()))
+            self.session.commit()
+        logging.info("[db] SUCCESSFULLY IMPORTED")
+
     def session(self) -> Session:
         return self.session
 
@@ -49,14 +57,6 @@ class DB:
         #         yield dict(row) if mapper is None else mapper(dict(row))
         # finally:
         #     cur.close()
-
-    def __init_schema(self):
-        logging.info("[DB] IMPORTING SCHEMA")
-        schema_file = 'resources/sql/schema.sql'
-        with open(schema_file, 'r') as file:
-            self.session.execute(text(file.read()))
-            self.session.commit()
-        logging.info("[DB] SUCCESSFULLY IMPORTED")
 
 
 def transactional(db):
