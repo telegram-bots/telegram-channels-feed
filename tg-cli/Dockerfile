@@ -13,20 +13,21 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends netcat libre
     make install && \
     make clean && \
     cd .. && \
-    rm -rf luarocks-2.4.0 && \
+    rm -rf luarocks-2.4.2 && \
     luarocks install lua-cjson && \
     luarocks install pgmoon && \
     luarocks install luasocket && \
-    curl -L "https://github.com/Yelp/dumb-init/releases/download/v1.1.3/dumb-init_1.1.3_amd64" -o /bin/dumb-init && \
+    curl -L "https://github.com/Yelp/dumb-init/releases/download/v1.2.0/dumb-init_1.2.0_amd64" -o /bin/dumb-init && \
     curl -L "https://valtman.name/files/telegram-cli-${TGCLI_VERSION}" -o /bin/telegram-cli && \
     chmod +x /bin/dumb-init /bin/telegram-cli && \
     apt-get purge -y ca-certificates curl gcc unzip git && apt-get autoremove -y && apt-get clean my room
 WORKDIR /home/telegram
-ADD config.cfg /telegram/config.cfg
-ADD handler.lua /telegram/handler.lua
 RUN mkdir -p /telegram/data/data && chmod -R 777 /telegram/data
+COPY config.cfg /home/telegram/
+COPY handler.lua /home/telegram/
 EXPOSE 4458
-COPY docker-healthcheck /usr/local/bin/
-HEALTHCHECK CMD ["docker-healthcheck"]
 ENTRYPOINT ["/bin/dumb-init", "--"]
-CMD ["/bin/telegram-cli", "--json", "-P", "4458", "--accept-any-tcp", "--disable-readline", "--config", "/telegram/config.cfg"]
+CMD ["/bin/telegram-cli", "--json", "-P", "4458", "--accept-any-tcp", "--disable-readline", "--config", "/home/telegram/config.cfg"]
+COPY docker-healthcheck /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-healthcheck
+HEALTHCHECK CMD ["docker-healthcheck"]

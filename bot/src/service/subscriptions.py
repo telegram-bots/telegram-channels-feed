@@ -39,6 +39,7 @@ class Subscriptions:
                     name=name
                 )
 
+            subscription_repository.all(channel_telegram_id=channel.id)
             subscription_repository.create(user_id=user.id, channel_id=channel.id)
 
             return channel

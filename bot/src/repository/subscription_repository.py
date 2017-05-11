@@ -1,7 +1,9 @@
 from typing import Generator
+from datetime import datetime
+from sqlalchemy.orm import subqueryload
 
 from src.config import db
-from src.domain.entities import Subscription
+from src.domain.entities import Subscription, Channel, User
 
 
 class SubscriptionRepository:
@@ -33,25 +35,12 @@ class SubscriptionRepository:
             .filter(Subscription.channel_id == channel_id)\
             .count()
 
-    def all(self, channel_telegram_id: int) -> Generator[Subscription, None, None]:
-        return db.get_lazy(
-            lambda cur: cur.execute(
-                """
-                SELECT
-                 ch.id AS channel_id,
-                 ch.telegram_id AS channel_telegram_id,
-                 ch.url AS channel_url,
-                 ch.name AS channel_name,
-                 ch.last_update as channel_last_update,
-                 u.id AS user_id,
-                 u.telegram_id AS user_telegram_id,
-                 sub.last_update AS last_update
-                FROM Channels AS ch
-                JOIN Subscriptions AS sub ON sub.channel_id = ch.id
-                JOIN Users AS u ON u.id = sub.user_id
-                WHERE ch.telegram_id = %s
-                """,
-                [channel_telegram_id]
-            ),
-            mapper=Subscription
-        )
+    def all(self, channel_telegram_id: int, timestamp: datetime):
+        query = db.session \
+            .query(Subscription) \
+            .options(subqueryload("channel").subqueryload("user")) \
+            .join(Subscription.channel) \
+            .join(Subscription.user) \
+            .filter(Channel.telegram_id == channel_telegram_id)
+
+        print(str(query))

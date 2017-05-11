@@ -18,7 +18,8 @@ class DB:
         self.session = sessionmaker(bind=self.engine)()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        self.session.close()
+        self.engine.dispose()
 
     def init(self):
         logging.info("[db] IMPORTING SCHEMA")
@@ -43,20 +44,16 @@ class DB:
         else:
             return result
 
-    def get_lazy(self, callback, mapper=None) -> Generator[Any, None, None]:
-        pass
-        # conn = self.connection()
-        # cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        #
-        # try:
-        #     callback(cur)
-        # except:
-        #     raise
-        # else:
-        #     for row in cur:
-        #         yield dict(row) if mapper is None else mapper(dict(row))
-        # finally:
-        #     cur.close()
+    def get_lazy(self, query, limit=100) -> Generator[Any, None, None]:
+        offset = 0
+        while True:
+            r = False
+            for elem in query.limit(limit).offset(offset):
+                r = True
+                yield elem
+            offset += limit
+            if not r:
+                break
 
 
 def transactional(db):

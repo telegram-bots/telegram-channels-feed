@@ -20,8 +20,8 @@ def main():
 
 def is_init():
     parser = ArgumentParser(description="Is init mode")
-    parser.add_argument('-i', '--init', action='store_true')
-    return parser.parse_args().i
+    parser.add_argument('--init', action='store_true')
+    return vars(parser.parse_args())['init']
 
 
 def init():

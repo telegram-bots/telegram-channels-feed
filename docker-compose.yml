@@ -2,11 +2,10 @@ version: '2.1'
 services:
   bot:
     build: ./bot
-    command: ["python", "-u", "run.py"]
     environment:
       - PYTHONUNBUFFERED=0
     volumes:
-      - ./storage/bot:/code/storage
+      - ./storage/bot:/code/data
     depends_on:
       tg-cli:
         condition: service_healthy
@@ -19,6 +18,8 @@ services:
     build: ./tg-cli
     volumes:
       - ./storage/tg-cli:/telegram
+    ports:
+      - "4458:4458"
     depends_on:
       rabbit:
         condition: service_healthy
@@ -27,9 +28,14 @@ services:
     build: ./db
     volumes:
       - ./storage/db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     restart: unless-stopped
   rabbit:
     build: ./rabbitmq
     volumes:
       - ./storage/rabbitmq:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     restart: unless-stopped
