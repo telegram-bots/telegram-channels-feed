@@ -74,8 +74,8 @@ class ChannelRepository:
                 .params(user_telegram_id=user_telegram_id) \
                 .all()
 
-    def set_timestamp(self, _id: int, timestamp: int):
+    def set_timestamp(self, telegram_id: int, timestamp: datetime):
         db.session \
             .query(Channel) \
-            .filter(Channel.id == _id) \
-            .update({Channel.last_update: datetime.fromtimestamp(timestamp)})
+            .filter(Channel.telegram_id == telegram_id) \
+            .update({Channel.last_update: timestamp})

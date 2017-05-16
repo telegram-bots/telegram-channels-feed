@@ -1,12 +1,11 @@
 import logging
 
 from sqlalchemy.exc import IntegrityError
-from typing import Generator
 from typing import List
 
 from src.config import db, tg_cli, user_repository, channel_repository, subscription_repository
 from src.domain.command import Command
-from src.domain.entities import Channel, Subscription
+from src.domain.entities import Channel
 from src.exception.subscription_exception import *
 
 
@@ -96,6 +95,3 @@ class Subscriptions:
         except Exception as e:
             logging.error(f"Failed to list subscriptions: {e}")
             raise SubscriptionsListError()
-
-    def all(self, channel_telegram_id: int, timestamp: int) -> Generator[Subscription, None, None]:
-        return subscription_repository.all(channel_telegram_id, timestamp)

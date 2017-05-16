@@ -60,4 +60,9 @@ subscription_repository = SubscriptionRepository()
 
 from .service import *
 subscriptions = Subscriptions()
-notifications = Notifications(subscriptions=subscriptions)
+notifications = Notifications()
+queue_consumer = QueueConsumer(config['rabbit'])
+updates_notifier = UpdatesNotifier(
+    notifications=notifications,
+    queue_consumer=queue_consumer
+)
