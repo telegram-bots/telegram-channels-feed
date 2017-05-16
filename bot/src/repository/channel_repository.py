@@ -1,4 +1,5 @@
 from datetime import datetime
+from sqlalchemy import or_
 from sqlalchemy.sql import text
 from typing import List, Optional
 
@@ -78,4 +79,5 @@ class ChannelRepository:
         db.session \
             .query(Channel) \
             .filter(Channel.telegram_id == telegram_id) \
+            .filter(or_(Channel.last_update < timestamp, Channel.last_update == None)) \
             .update({Channel.last_update: timestamp})

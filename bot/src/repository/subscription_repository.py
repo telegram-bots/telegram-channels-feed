@@ -53,4 +53,5 @@ class SubscriptionRepository:
             .query(Subscription) \
             .filter(Subscription.user_id == user_id) \
             .filter(Subscription.channel_id == channel_id) \
+            .filter(or_(Subscription.last_update < timestamp, Subscription.last_update == None)) \
             .update({Subscription.last_update: timestamp})

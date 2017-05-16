@@ -5,6 +5,7 @@ import pprint
 from datetime import datetime
 from retry import retry
 from telegram.error import NetworkError
+from telegram.ext.dispatcher import run_async
 from src.config import encoding
 
 
@@ -13,6 +14,7 @@ class UpdatesNotifier:
         self.notifications = notifications
         self.queue_consumer = queue_consumer
 
+    @run_async
     def instance(self, bot):
         self.bot = bot
         self.queue_consumer.run(on_message_callback=self.on_message)
