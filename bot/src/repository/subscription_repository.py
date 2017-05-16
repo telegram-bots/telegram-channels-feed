@@ -1,9 +1,9 @@
-from typing import Generator
 from datetime import datetime
-from sqlalchemy.orm import subqueryload
+from typing import Generator
+from sqlalchemy.orm import joinedload
 
 from src.config import db
-from src.domain.entities import Subscription, Channel, User
+from src.domain.entities import Subscription, Channel
 
 
 class SubscriptionRepository:
@@ -35,12 +35,23 @@ class SubscriptionRepository:
             .filter(Subscription.channel_id == channel_id)\
             .count()
 
-    def all(self, channel_telegram_id: int, timestamp: datetime):
+    def all(self, channel_telegram_id: int, timestamp: int) -> Generator[Subscription, None, None]:
+        last_update = datetime.fromtimestamp(timestamp)
+
         query = db.session \
             .query(Subscription) \
-            .options(subqueryload("channel").subqueryload("user")) \
+            .options(joinedload(Subscription.user)) \
+            .options(joinedload(Subscription.channel)) \
             .join(Subscription.channel) \
-            .join(Subscription.user) \
-            .filter(Channel.telegram_id == channel_telegram_id)
+            .filter(Channel.telegram_id == channel_telegram_id) \
+            .filter(Channel.last_update < last_update) \
+            .filter(Subscription.last_update < last_update)
 
-        print(str(query))
+        return db.get_lazy(query)
+
+    def set_timestamp(self, user_id: int, channel_id: int, timestamp: int):
+        db.session \
+            .query(Subscription) \
+            .filter(Subscription.user_id == user_id) \
+            .filter(Subscription.channel_id == channel_id) \
+            .update({Subscription.last_update: datetime.fromtimestamp(timestamp)})

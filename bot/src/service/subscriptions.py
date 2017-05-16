@@ -39,7 +39,6 @@ class Subscriptions:
                     name=name
                 )
 
-            subscription_repository.all(channel_telegram_id=channel.id)
             subscription_repository.create(user_id=user.id, channel_id=channel.id)
 
             return channel
@@ -98,5 +97,5 @@ class Subscriptions:
             logging.error(f"Failed to list subscriptions: {e}")
             raise SubscriptionsListError()
 
-    def all(self, channel_telegram_id: int) -> Generator[Subscription, None, None]:
-        return subscription_repository.all(channel_telegram_id)
+    def all(self, channel_telegram_id: int, timestamp: int) -> Generator[Subscription, None, None]:
+        return subscription_repository.all(channel_telegram_id, timestamp)

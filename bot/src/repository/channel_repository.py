@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy.sql import text
 from typing import List, Optional
 
@@ -72,3 +73,9 @@ class ChannelRepository:
                 )) \
                 .params(user_telegram_id=user_telegram_id) \
                 .all()
+
+    def set_timestamp(self, _id: int, timestamp: int):
+        db.session \
+            .query(Channel) \
+            .filter(Channel.id == _id) \
+            .update({Channel.last_update: datetime.fromtimestamp(timestamp)})
