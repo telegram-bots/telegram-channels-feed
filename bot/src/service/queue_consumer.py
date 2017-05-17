@@ -61,7 +61,7 @@ class QueueConsumer:
         :rtype: pika.SelectConnection
 
         """
-        logging.info('Connecting to %s', self.url)
+        logging.info(f"Connecting to {self.url}")
         return pika.SelectConnection(pika.URLParameters(self.url),
                                      self.on_connection_open,
                                      stop_ioloop_on_close=False)
@@ -91,8 +91,10 @@ class QueueConsumer:
         logging.debug('Adding consumer cancellation callback')
         self.channel.add_on_cancel_callback(lambda method_frame: self.channel.close if self.channel else None)
         logging.debug('Issuing consumer related RPC commands')
-        self.consumer_tag = self.channel.basic_consume(self.on_message_callback,
-                                                       self.queue)
+        self.consumer_tag = self.channel.basic_consume(
+            self.on_message_callback,
+            self.queue
+        )
 
     def on_connection_open(self, connection):
         """This method is called by pika once the connection to RabbitMQ has
@@ -120,8 +122,7 @@ class QueueConsumer:
         if self.closing:
             self.connection.ioloop.stop()
         else:
-            logging.warning('Connection closed, reopening in 5 seconds: (%s) %s',
-                           reply_code, reply_text)
+            logging.warning(f"Connection closed, reopening in 5 seconds: ({reply_code}) {reply_text}")
             self.connection.add_timeout(5, self.reconnect)
 
     def on_channel_open(self, channel):
@@ -136,7 +137,7 @@ class QueueConsumer:
         logging.debug('Channel opened')
         self.channel = channel
         self.channel.add_on_close_callback(lambda c, rc, rt: self.connection.close())
-        logging.debug('Declaring exchange %s', self.exchange)
+        logging.debug(f"Declaring exchange {self.exchange}")
         self.channel.exchange_declare(
             lambda frame: self.channel.queue_declare(self.on_queue_declareok, self.queue, durable=self.DURABLE),
             self.exchange,
@@ -153,8 +154,7 @@ class QueueConsumer:
 
         :param pika.frame.Method method_frame: The Queue.DeclareOk frame
         """
-        logging.debug('Binding %s to %s with %s',
-                     self.exchange, self.queue, self.ROUTING_KEY)
+        logging.debug(f"Binding {self.exchange} to {self.queue} with {self.ROUTING_KEY}")
         self.channel.queue_bind(
             lambda q: self.start_consuming(),
             self.queue,

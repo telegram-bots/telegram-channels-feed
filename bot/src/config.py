@@ -62,7 +62,9 @@ from .service import *
 subscriptions = Subscriptions()
 notifications = Notifications()
 queue_consumer = QueueConsumer(config['rabbit'])
+post_formatter = PostFormatter()
 updates_notifier = UpdatesNotifier(
     notifications=notifications,
-    queue_consumer=queue_consumer
+    queue_consumer=queue_consumer,
+    post_formatter=post_formatter
 )
