@@ -29,6 +29,7 @@ def validate(conf: ConfigParser) -> ConfigParser:
         'bot': ['token', 'name'],
         'tg-cli': ['id', 'host', 'port'],
         'db': ['host', 'port', 'name', 'user', 'password'],
+        'rabbit': ['host', 'port', 'user', 'password', 'vh'],
         'updates': ['mode']
     }
 

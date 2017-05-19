@@ -3,6 +3,8 @@ import pika
 
 
 class QueueConsumer:
+    EXCHANGE_NAME = 'channels_feed'
+    QUEUE_NAME = 'channels_feed.single'
     EXCHANGE_TYPE = 'direct'
     ROUTING_KEY = '#'
     DURABLE = True
@@ -19,8 +21,6 @@ class QueueConsumer:
         self.closing = False
         self.consumer_tag = None
         self.url = f"amqp://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{config['vh']}"
-        self.exchange = config['exchange']
-        self.queue = config['queue']
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
@@ -93,7 +93,7 @@ class QueueConsumer:
         logging.debug('Issuing consumer related RPC commands')
         self.consumer_tag = self.channel.basic_consume(
             self.on_message_callback,
-            self.queue
+            self.QUEUE_NAME
         )
 
     def on_connection_open(self, connection):
@@ -137,10 +137,10 @@ class QueueConsumer:
         logging.debug('Channel opened')
         self.channel = channel
         self.channel.add_on_close_callback(lambda c, rc, rt: self.connection.close())
-        logging.debug(f"Declaring exchange {self.exchange}")
+        logging.debug(f"Declaring exchange {self.EXCHANGE_NAME}")
         self.channel.exchange_declare(
-            lambda frame: self.channel.queue_declare(self.on_queue_declareok, self.queue, durable=self.DURABLE),
-            self.exchange,
+            lambda frame: self.channel.queue_declare(self.on_queue_declareok, self.QUEUE_NAME, durable=self.DURABLE),
+            self.EXCHANGE_NAME,
             self.EXCHANGE_TYPE,
             durable=self.DURABLE
         )
@@ -154,10 +154,10 @@ class QueueConsumer:
 
         :param pika.frame.Method method_frame: The Queue.DeclareOk frame
         """
-        logging.debug(f"Binding {self.exchange} to {self.queue} with {self.ROUTING_KEY}")
+        logging.debug(f"Binding {self.EXCHANGE_NAME} to {self.QUEUE_NAME} with {self.ROUTING_KEY}")
         self.channel.queue_bind(
             lambda q: self.start_consuming(),
-            self.queue,
-            self.exchange,
+            self.QUEUE_NAME,
+            self.EXCHANGE_NAME,
             self.ROUTING_KEY
         )

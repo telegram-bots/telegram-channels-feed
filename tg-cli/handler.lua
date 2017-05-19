@@ -1,48 +1,75 @@
-print("STARTED HANDLER")
-local encode_json = require("pgmoon.json").encode_json
-local pg = require("pgmoon").new({
-    host = "db",
-    port = "5432",
-    database = "postgres",
-    user = "postgres"
-})
-local conn = pg:connect()
-print("INITIALISED HANDLER")
+print("STARTED HANDLER INITIALISATION")
+ROUTING_KEY = "#"
+EXCHANGE_NAME = "channels_feed"
+HOST = "rabbit"
+PORT = 5672
+
+local cjson = require("cjson")
+local amqp = require("amqp")
+local channel
+local opts = {
+    mandatory=true
+}
+local properties = {
+    content_type="application/json",
+    content_encoding="utf-8",
+    delivery_mode=2
+}
 
 -- Sleep for given time
-function sleep (seconds)
+function sleep(seconds)
     local sec = tonumber(os.clock() + seconds);
     while (os.clock() < sec) do
     end
 end
 
--- Try to connect to DB until success
+-- Try to connect to AMQP until success
 function connect()
-    while conn == nil do
-        print("CONNECTION LOST. TRYING TO RECONNECT...")
-        sleep(5)
-        conn = pg:connect()
+    print("Connecting to AMQP...")
+
+    if channel ~= nil then
+        channel:teardown()
+        channel = nil
     end
+
+    channel = amqp.new({
+        role = "publisher",
+        routing_key = ROUTING_KEY,
+        exchange = EXCHANGE_NAME,
+        mandatory = True
+    })
+
+    local conn_ok, conn_err = channel:connect(HOST, PORT)
+    while conn_ok == nil do
+        print("CONNECTION LOST: " .. conn_err .. ". TRYING TO RECONNECT...")
+        sleep(5)
+        conn_ok = channel:connect(HOST, PORT)
+    end
+
+    local init_ok, init_err = channel:setup()
+    while init_ok == nil do
+        print("INITIALISATION FAILED: " .. init_err ..  ". TRYING AGAIN...")
+        sleep(5)
+        init_ok = channel:setup()
+    end
+    print("Connected to AMQP")
 end
 
--- Save message to DB
-function save_message(chat_id, msg_id, timestamp, msg)
-    if conn == nil then
-        connect()
-    end
+connect()
+print("HANDLER INITIALISATION COMPLETE")
 
-    local query = "INSERT INTO Notifications (channel_telegram_id, message_id, timestamp, raw) "..
-            "VALUES(" .. chat_id .. ", " .. msg_id .. ", '" .. timestamp .. "', " .. msg .. ")"
-    local res = pg:query(query)
+-- Send message to AMQP exchange
+function send_to_exchange(msg)
+    local res, err = channel:publish(msg, opts, properties)
     while res ~= true do
-        print("Error saving to DB")
-        if conn == nil then
+        print("Error sending to exchange: " .. err)
+        sleep(5)
+        if err:find("closed") then
             connect()
         end
-        sleep(5)
-        res = pg:query(query)
+        res, err = channel:publish(msg, opts, properties)
     end
-    print("Successfully saved to DB")
+    print("Successfully sent to exchange")
 end
 
 -- Reply to user
@@ -65,21 +92,16 @@ function reply(chat_id, msg_id, text)
 end
 
 -- telegram-cli default
-function dl_cb (arg, data)
+function dl_cb(arg, data)
 end
 
 -- telegram-cli message callback
-function tdcli_update_callback (data)
+function tdcli_update_callback(data)
     if (data.ID == "UpdateNewMessage") then
         local msg = data.message_
 
         if (msg.is_post_ == true) then
-            save_message(
-                msg.chat_id_,
-                msg.id_,
-                os.date('%Y-%m-%d %H:%M:%S', msg.date_),
-                encode_json(msg)
-            )
+            send_to_exchange(cjson.encode(msg))
         elseif msg.content_.ID == "MessageText" then
             if msg.content_.text_:lower() == "ping" then
                 reply(msg.chat_id_, msg.id_, "pong")
