@@ -2,33 +2,41 @@ version: '2.1'
 services:
   bot:
     build: ./bot
-    command: python run.py
+    environment:
+      - PYTHONUNBUFFERED=0
     volumes:
-      - ./bot:/code
+      - ./storage/bot:/code/data
     depends_on:
-      db:
-        condition: service_healthy
       tg-cli:
         condition: service_healthy
-  db:
-    image: postgres:9.6.2-alpine
-    volumes:
-      - ./storage/db:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD", "ping", "-c", "1", "db"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-  tg-cli:
-    build: ./tg-cli
-    command: ["/bin/telegram-cli", "--json", "-P", "4458", "--accept-any-tcp", "--disable-readline", "--config", "/telegram/config.cfg"]
-    volumes:
-      - ./storage/tg-cli:/telegram/data
-    depends_on:
       db:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "ping", "-c", "1", "tg-cli"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      rabbit:
+        condition: service_healthy
+    restart: unless-stopped
+  tg-cli:
+    build: ./tg-cli
+    volumes:
+      - ./storage/tg-cli:/telegram
+    ports:
+      - "4458:4458"
+    depends_on:
+      rabbit:
+        condition: service_healthy
+    restart: unless-stopped
+  db:
+    build: ./db
+    volumes:
+      - ./storage/db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+  rabbit:
+    build: ./rabbitmq
+    hostname: rabbit
+    volumes:
+      - ./storage/rabbitmq:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: unless-stopped

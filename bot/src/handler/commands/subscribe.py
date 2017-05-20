@@ -1,19 +1,18 @@
 from . import Base
-from src.config import subscription_service
+from src.config import subscriptions
+from src.exception.subscription_exception import GenericSubscriptionError
 
 
 class Subscribe(Base):
     name = 'subscribe'
+    aliases = ['s']
 
-    @staticmethod
-    def execute(bot, command):
+    def execute(self, command):
         if not command.is_private():
-            Subscribe.reply(bot, command, 'Groups currently are not supported!')
+            self.reply(command, 'Groups currently are not supported!')
 
         try:
-            channel_name = subscription_service.subscribe(command)
-            Subscribe.reply(bot, command, 'Successfully subscribed to "{}"'.format(channel_name))
-        except NameError:
-            Subscribe.reply(bot, command, "Illegal channel url! Type /help")
-        except:
-            Subscribe.reply(bot, command, "Failed to subscribe. Please try again later.")
+            channel = subscriptions.subscribe(command)
+            self.reply(command, f"Successfully subscribed to {channel.name} (@{channel.url})")
+        except GenericSubscriptionError as e:
+            self.reply(command, str(e))

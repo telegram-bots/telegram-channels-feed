@@ -1,17 +1,18 @@
 from . import Base
-from src.config import subscription_service
+from src.config import subscriptions
+from src.exception.subscription_exception import GenericSubscriptionError
 
 
 class Unsubscribe(Base):
     name = 'unsubscribe'
+    aliases = ['u']
 
-    @staticmethod
-    def execute(bot, command):
+    def execute(self, command):
         if not command.is_private():
-            Unsubscribe.reply(bot, command, 'Groups currently are not supported!')
+            self.reply(command, 'Groups currently are not supported!')
 
         try:
-            channel_name = subscription_service.unsubscribe(command)
-            Unsubscribe.reply(bot, command, 'Successfully unsubscribed from "{}"'.format(channel_name))
-        except:
-            Unsubscribe.reply(bot, command, "Failed to unsubscribe. Please try again later.")
+            channel = subscriptions.unsubscribe(command)
+            self.reply(command, f"Successfully unsubscribed from {channel.name} (@{channel.url})")
+        except GenericSubscriptionError as e:
+            self.reply(command, str(e))

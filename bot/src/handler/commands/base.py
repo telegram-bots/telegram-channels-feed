@@ -5,20 +5,19 @@ from abc import ABC, abstractmethod
 class Base(ABC):
     name = None
     aliases = []
+    bot = None
 
-    @staticmethod
     @abstractmethod
-    def execute(bot, command):
+    def execute(self, command):
         pass
 
-    @staticmethod
-    def reply(bot, command, message):
-        logging.debug("[Chat %s %s command] %s: %s" %
-                      (command.chat_type,
-                       command.chat_id,
-                       command.name,
-                       message))
+    def reply(self, command, text, parse_mode=None, disable_web_page_preview=True):
+        logging.debug(f"Reply to command [{command}]: {text}")
 
-        bot.send_message(chat_id=command.chat_id,
-                         reply_to_message_id=command.message.message_id,
-                         text=message)
+        self.bot.send_message(
+            chat_id=command.chat_id,
+            reply_to_message_id=command.message.message_id,
+            text=text,
+            parse_mode=parse_mode,
+            disable_web_page_preview=disable_web_page_preview
+        )

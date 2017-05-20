@@ -1,4 +1,5 @@
 import random
+import threading
 
 
 def random_element(xlist):
@@ -24,7 +25,15 @@ def safe_cast(val, to_type, default=None):
         return default
 
 
-def read_to_string(file_path):
+def read_to_string(file_path) -> str:
     with open(file_path, 'r') as file:
         data = file.read()
     return data
+
+
+def threaded(fn):
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+    return wrapper
