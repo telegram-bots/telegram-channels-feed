@@ -8,6 +8,7 @@ from src.domain.entities import Channel
 
 class Export(Base):
     name = 'export'
+    aliases = ['e']
 
     def execute(self, command):
         rows = subscriptions.list(command)

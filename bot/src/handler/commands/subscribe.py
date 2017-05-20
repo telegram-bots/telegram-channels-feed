@@ -5,6 +5,7 @@ from src.exception.subscription_exception import GenericSubscriptionError
 
 class Subscribe(Base):
     name = 'subscribe'
+    aliases = ['s']
 
     def execute(self, command):
         if not command.is_private():

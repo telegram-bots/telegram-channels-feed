@@ -9,6 +9,7 @@ from telegram.parsemode import ParseMode
 # TODO. Добавить пагинацию и возможность нажать кнопку отписаться прямо там же, напротив каждого пункта из списка
 class List(Base):
     name = 'list'
+    aliases = ['l']
 
     def execute(self, command):
         if not command.is_private():

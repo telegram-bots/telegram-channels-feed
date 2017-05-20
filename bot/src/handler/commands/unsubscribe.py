@@ -5,6 +5,7 @@ from src.exception.subscription_exception import GenericSubscriptionError
 
 class Unsubscribe(Base):
     name = 'unsubscribe'
+    aliases = ['u']
 
     def execute(self, command):
         if not command.is_private():
