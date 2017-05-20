@@ -33,6 +33,7 @@ services:
     restart: unless-stopped
   rabbit:
     build: ./rabbitmq
+    hostname: rabbit
     volumes:
       - ./storage/rabbitmq:/var/lib/rabbitmq
     ports:
