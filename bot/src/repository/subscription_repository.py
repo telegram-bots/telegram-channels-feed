@@ -40,7 +40,6 @@ class SubscriptionRepository:
         query = db.session \
             .query(Subscription) \
             .options(joinedload(Subscription.user)) \
-            .options(joinedload(Subscription.channel)) \
             .join(Subscription.channel) \
             .filter(Channel.telegram_id == channel_telegram_id) \
             .filter(or_(Channel.last_update < timestamp, Channel.last_update == None)) \

@@ -28,7 +28,7 @@ class Subscriptions:
         def callback():
             user = user_repository.get_or_create(telegram_id=command.chat_id)
 
-            channel = channel_repository.get(command.channel_url)
+            channel = channel_repository.get(url=command.channel_url)
             if channel is None:
                 telegram_id, name = tg_cli.lookup_channel(command.channel_url)
                 tg_cli.subscribe_to_channel(telegram_id)
@@ -64,7 +64,7 @@ class Subscriptions:
             if user is None:
                 raise NotSubscribedError()
 
-            channel = channel_repository.get(command.channel_url)
+            channel = channel_repository.get(url=command.channel_url)
             if channel is None:
                 raise NotSubscribedError()
 

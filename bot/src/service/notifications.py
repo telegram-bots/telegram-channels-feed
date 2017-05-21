@@ -1,10 +1,13 @@
-from typing import Generator
+from typing import Generator, Optional
 from datetime import datetime
 from src.config import db, channel_repository, subscription_repository
-from src.domain.entities import Subscription
+from src.domain.entities import Subscription, Channel
 
 
 class Notifications:
+    def get_channel_info(self, channel_telegram_id) -> Optional[Channel]:
+        return channel_repository.get(telegram_id=channel_telegram_id)
+
     def list_not_notified(self, channel_telegram_id: int, timestamp: datetime) -> Generator[Subscription, None, None]:
         return subscription_repository.all(channel_telegram_id, timestamp)
 
