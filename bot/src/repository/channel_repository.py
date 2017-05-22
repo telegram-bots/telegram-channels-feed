@@ -1,4 +1,3 @@
-from datetime import datetime
 from sqlalchemy import or_
 from sqlalchemy.sql import text
 from typing import List, Optional
@@ -71,7 +70,7 @@ class ChannelRepository:
                 .query(Channel) \
                 .from_statement(text(
                     """
-                    SELECT ch.id, ch.telegram_id, ch.url, ch.name, ch.last_update
+                    SELECT ch.id, ch.telegram_id, ch.url, ch.name, ch.last_message_id
                     FROM Subscriptions AS sub
                     JOIN Users AS u ON u.id = sub.user_id
                     JOIN Channels AS ch ON ch.id = sub.channel_id
@@ -81,9 +80,9 @@ class ChannelRepository:
                 .params(user_telegram_id=user_telegram_id) \
                 .all()
 
-    def set_timestamp(self, telegram_id: int, timestamp: datetime):
+    def set_message_id(self, telegram_id: int, message_id: int):
         db.session \
             .query(Channel) \
             .filter(Channel.telegram_id == telegram_id) \
-            .filter(or_(Channel.last_update < timestamp, Channel.last_update == None)) \
-            .update({Channel.last_update: timestamp})
+            .filter(or_(Channel.last_message_id < message_id, Channel.last_message_id == None)) \
+            .update({Channel.last_message_id: message_id})

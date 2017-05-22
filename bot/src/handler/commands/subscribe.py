@@ -1,6 +1,6 @@
-from . import Base
 from src.config import subscriptions
 from src.exception.subscription_exception import GenericSubscriptionError
+from . import Base
 
 
 class Subscribe(Base):

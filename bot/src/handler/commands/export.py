@@ -1,9 +1,11 @@
-from . import Base
-import os
 import csv
+
+import os
 from typing import List
+
 from src.config import subscriptions
 from src.domain.entities import Channel
+from . import Base
 
 
 class Export(Base):

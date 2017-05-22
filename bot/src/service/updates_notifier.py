@@ -1,12 +1,12 @@
 import json
 import logging
-
 from datetime import datetime
-from retry import retry
-from telegram.error import NetworkError
+
+from retry.api import retry_call
 from telegram.ext.dispatcher import run_async
+
 from src.config import encoding
-from src.domain.post import Post
+from src.domain.post import PostInfo
 from src.service.post_formatter import PostFormatter
 
 
@@ -23,27 +23,45 @@ class UpdatesNotifier:
         return self
 
     def on_message(self, mq_channel, basic_deliver, properties, body):
-        logging.debug(f"Received message #{basic_deliver.delivery_tag} from {properties.app_id}: {body}")
+        logging.info(f"Received message #{basic_deliver.delivery_tag}")
+        logging.debug(f"From app {properties.app_id}: {body}")
 
         json_obj = json.loads(body.decode(encoding))
-        channel_telegram_id = json_obj['chat_id_']
-        timestamp = datetime.fromtimestamp(json_obj['date_'])
-        channel = self.notifications.get_channel_info(channel_telegram_id)
-        post = PostFormatter(channel, json_obj).format()
+        info = PostInfo(
+            channel_telegram_id=json_obj['chat_id_'],
+            message_id=json_obj['id_'],
+            date=datetime.fromtimestamp(json_obj['date_']),
+            raw=json_obj
+        )
+        channel = self.notifications.get_channel_info(info.channel_telegram_id)
+        post = PostFormatter(channel, info).format()
         has_errors = False
 
-        for notify in self.notifications.list_not_notified(channel_telegram_id, timestamp):
+        logging.debug(f"Formatted post: {post}")
+
+        for notify in self.notifications.list_not_notified(info.channel_telegram_id, info.message_id):
             try:
                 user = notify.user
 
-                logging.debug(f"Sending channel {channel.id} content to user {user.id}")
-                self.__send_message(chat_id=user.telegram_id, post=post)
+                logging.info(f"Sending channel {channel.id} content to user {user.id}")
+                retry_call(
+                    self.bot.send_message,
+                    fkwargs={
+                        'chat_id': user.telegram_id,
+                        'text': post.text,
+                        'parse_mode': post.type,
+                        'reply_markup': post.keyboard,
+                        'disable_web_page_preview': not post.preview_enabled
+                    },
+                    tries=5,
+                    delay=10
+                )
 
-                logging.debug(f"Marking subscription {user.id}:{channel.id} as updated at {timestamp}")
+                logging.info(f"Setting subscription {user.id}:{channel.id} last_message_id to {info.message_id} ({info.date})")
                 self.notifications.mark_subscription(
                     user_id=user.id,
                     channel_id=channel.id,
-                    timestamp=timestamp
+                    message_id=info.message_id
                 )
             except Exception as e:
                 has_errors = True
@@ -53,21 +71,11 @@ class UpdatesNotifier:
         if has_errors:
             return
 
-        logging.debug(f"Marking channel {channel.id} as updated at {timestamp}")
+        logging.info(f"Setting channel {channel.id} last_message_id to {info.message_id} ({info.date})")
         self.notifications.mark_channel(
-            channel_telegram_id=channel_telegram_id,
-            timestamp=timestamp
+            info.channel_telegram_id,
+            info.message_id
         )
 
-        logging.debug(f"Acknowledging message #{basic_deliver.delivery_tag}")
+        logging.info(f"Acknowledging message #{basic_deliver.delivery_tag}")
         mq_channel.basic_ack(basic_deliver.delivery_tag)
-
-    @retry(NetworkError, tries=5, delay=10)
-    def __send_message(self, chat_id: int, post: Post):
-        self.bot.sendMessage(
-            chat_id=chat_id,
-            text=post.text,
-            parse_mode=post.type,
-            reply_markup=post.keyboard,
-            disable_web_page_preview=not post.preview_enabled
-        )

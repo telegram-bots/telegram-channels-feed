@@ -1,8 +1,8 @@
 from sqlalchemy.sql import text
+from typing import Optional
 
 from src.config import db
 from src.domain.entities import User
-from typing import Optional
 
 
 class UserRepository:

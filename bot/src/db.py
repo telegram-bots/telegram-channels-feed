@@ -1,6 +1,5 @@
 import logging
 
-from functools import wraps
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.sql import text

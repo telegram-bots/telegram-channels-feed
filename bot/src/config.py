@@ -1,7 +1,8 @@
 # Config
-import os
 import os.path
 from configparser import ConfigParser
+
+import os
 
 
 def load() -> ConfigParser:

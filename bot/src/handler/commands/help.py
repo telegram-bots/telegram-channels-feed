@@ -1,6 +1,7 @@
 import os
-from . import Base
+
 from src.utils import read_to_string
+from . import Base
 
 
 class Help(Base):
