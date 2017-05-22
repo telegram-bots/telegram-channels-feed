@@ -1,19 +1,31 @@
 print("STARTED HANDLER INITIALISATION")
+
 ROUTING_KEY = "#"
-EXCHANGE_NAME = "channels_feed"
 HOST = "rabbit"
 PORT = 5672
 
 local cjson = require("cjson")
 local amqp = require("amqp")
 local channel
-local opts = {
-    mandatory=true
+local connection = {
+    role = "publisher",
+    routing_key = ROUTING_KEY,
+    exchange = "channels_feed",
+    queue = "channels_feed.single"
+}
+local exchange = {
+    typ = "direct",
+    durable = true
+}
+local queue = {
+    durable = true,
+    auto_delete = false,
+    no_wait = false
 }
 local properties = {
-    content_type="application/json",
-    content_encoding="utf-8",
-    delivery_mode=2
+    content_type = "application/json",
+    content_encoding = "utf-8",
+    delivery_mode = 2
 }
 
 -- Sleep for given time
@@ -32,12 +44,7 @@ function connect()
         channel = nil
     end
 
-    channel = amqp.new({
-        role = "publisher",
-        routing_key = ROUTING_KEY,
-        exchange = EXCHANGE_NAME,
-        mandatory = True
-    })
+    channel = amqp.new(connection)
 
     local conn_ok, conn_err = channel:connect(HOST, PORT)
     while conn_ok == nil do
@@ -55,19 +62,33 @@ function connect()
     print("Connected to AMQP")
 end
 
+-- Declare exchange, queue and bind them
+function declare()
+    channel:exchange_declare(exchange)
+    print("Exchange successfully declared")
+
+    channel:queue_declare(queue)
+    print("Queue successfully declared")
+
+    channel:queue_bind({routing_key = ROUTING_KEY})
+    print("Exchange successfully bound to queue")
+end
+
 connect()
+declare()
+
 print("HANDLER INITIALISATION COMPLETE")
 
 -- Send message to AMQP exchange
 function send_to_exchange(msg)
-    local res, err = channel:publish(msg, opts, properties)
+    local res, err = channel:publish(msg, {}, properties)
     while res ~= true do
         print("Error sending to exchange: " .. err)
         sleep(5)
         if err:find("closed") then
             connect()
         end
-        res, err = channel:publish(msg, opts, properties)
+        res, err = channel:publish(msg, {}, properties)
     end
     print("Successfully sent to exchange")
 end

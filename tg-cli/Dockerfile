@@ -26,8 +26,8 @@ RUN curl -L "http://luajit.org/download/LuaJIT-${LUAJIT_VERSION}.tar.gz" -o ./Lu
 RUN apt-get purge -y ca-certificates curl gcc unzip git && apt-get autoremove -y && apt-get clean my room
 WORKDIR /home/telegram
 RUN mkdir -p /telegram/data/data && chmod -R 777 /telegram/data
-COPY config.cfg /home/telegram/
-COPY handler.lua /home/telegram/
+COPY files/config.cfg /home/telegram/
+COPY files/handler.lua /home/telegram/
 EXPOSE 4458
 ENTRYPOINT ["/bin/dumb-init", "--"]
 CMD ["/bin/telegram-cli", "--json", "-P", "4458", "--accept-any-tcp", "--disable-readline", "--config", "/home/telegram/config.cfg"]
