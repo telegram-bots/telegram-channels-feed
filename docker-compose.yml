@@ -32,7 +32,7 @@ services:
       - "5432:5432"
     restart: unless-stopped
   rabbit:
-    build: ./rabbitmq
+    image: "rednblack/rabbitmq"
     hostname: rabbit
     volumes:
       - ./storage/rabbitmq:/var/lib/rabbitmq

@@ -30,6 +30,7 @@ class UpdatesNotifier:
         timestamp = datetime.fromtimestamp(json_obj['date_'])
         channel = self.notifications.get_channel_info(channel_telegram_id)
         post = PostFormatter(channel, json_obj).format()
+        has_errors = False
 
         for notify in self.notifications.list_not_notified(channel_telegram_id, timestamp):
             try:
@@ -45,8 +46,12 @@ class UpdatesNotifier:
                     timestamp=timestamp
                 )
             except Exception as e:
+                has_errors = True
                 logging.error(f"Failed to deliver message: {e}")
-                return
+                continue
+
+        if has_errors:
+            return
 
         logging.debug(f"Marking channel {channel.id} as updated at {timestamp}")
         self.notifications.mark_channel(

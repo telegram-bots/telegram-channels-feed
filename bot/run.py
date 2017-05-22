@@ -30,7 +30,7 @@ def init():
 
 def setup_logging():
     log_config = ConfigParser()
-    log_config.read(os.path.join('resources', 'logging.conf'), encoding=encoding)
+    log_config.read(os.path.join('resources', 'cfg', 'logging.conf'), encoding=encoding)
 
     user_log_config = os.getenv('LOGGING_CONFIG_PATH', './logging.conf')
     if os.path.exists(user_log_config) and os.path.isfile(user_log_config):

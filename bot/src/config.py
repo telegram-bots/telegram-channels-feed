@@ -6,7 +6,7 @@ from configparser import ConfigParser
 
 def load() -> ConfigParser:
     app_config = ConfigParser()
-    app_config.read(os.path.join('resources', 'application.conf'), encoding=encoding)
+    app_config.read(os.path.join('resources', 'cfg', 'application.conf'), encoding=encoding)
 
     user_app_config = os.getenv('CONFIG_PATH', './application.conf')
     if os.path.exists(user_app_config) and os.path.isfile(user_app_config):

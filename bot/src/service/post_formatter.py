@@ -1,9 +1,10 @@
-import logging
 import html
-from src.domain.post import Post
-from src.domain.entities import Channel
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+import logging
+
 from telegram.parsemode import ParseMode
+
+from src.domain.entities import Channel
+from src.domain.post import Post
 
 
 class PostFormatter:
@@ -29,17 +30,8 @@ class PostFormatter:
         return Post(
             text=text,
             type=ParseMode.HTML,
-            keyboard=self.__make_keyboard(),
             preview_enabled=has_links
         )
-
-    def __make_keyboard(self):
-        return InlineKeyboardMarkup([[
-            InlineKeyboardButton(
-                'Source',
-                url=f"https://t.me/{self.channel.url}/{self.json_obj['id_']}"
-            )
-        ]])
 
     def __make_text(self):
         first_link = self.__extract_first_link()
@@ -49,7 +41,7 @@ class PostFormatter:
         return first_link != "", self.__shorten_text(first_link + header + text)
 
     def __generate_header(self) -> str:
-        return f"<b>new in</b> <a href=\"https://t.me/{self.channel.url}\">{html.escape(self.channel.name)}</a>"
+        return f"<b>new in</b> <a href=\"https://t.me/{self.channel.url}/{self.json_obj['id_']}\">{html.escape(self.channel.name)}</a>"
 
     def __extract_text(self) -> str:
         text = None

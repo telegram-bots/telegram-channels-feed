@@ -15,7 +15,7 @@ class Export(Base):
         if len(rows) == 0:
             self.reply(command, "You don't have active subscriptions.")
 
-        file = f"{command.chat_id}_export.csv"
+        file = f"data/{command.chat_id}_export.csv"
         self.__create_csv(file, subscriptions.list(command))
         self.bot.send_document(chat_id=command.chat_id,
                                document=open(file, 'rb'))

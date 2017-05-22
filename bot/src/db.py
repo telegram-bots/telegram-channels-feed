@@ -54,12 +54,3 @@ class DB:
             offset += limit
             if not r:
                 break
-
-
-def transactional(db):
-    def wrapper(fn):
-        @wraps(fn)
-        def wrapped(self, *f_args, **f_kwargs):
-            return db.execute_in_transaction(callback=lambda: fn(self, *f_args, **f_kwargs))
-        return wrapped
-    return wrapper

@@ -59,7 +59,7 @@ class TelegramCLI:
             self.connected = True
             logging.info('[tg-cli] Connected')
         except socket.error as e:
-            logging.warn(f"[tg-cli] Failed to connect : {str(e)}")
+            logging.warning(f"[tg-cli] Failed to connect : {str(e)}")
             time.sleep(5)
             self.__connect()
 
