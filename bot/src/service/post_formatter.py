@@ -66,7 +66,8 @@ class PostFormatter:
                 if entity['ID'] == 'MessageEntityUrl':
                     offset = entity['offset_']
                     length = entity['length_']
-                    link = raw['content_']['text_'][offset:length + offset]
+                    text = raw['content_']['text_'].encode('utf-16-le')
+                    link = text[offset * 2:(length + offset) * 2].decode('utf-16-le')
                     break
 
         return f"<a href=\"{html.escape(link)}\">\xad</a>" if link is not None else ""
