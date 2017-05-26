@@ -14,6 +14,15 @@ services:
       rabbit:
         condition: service_healthy
     restart: unless-stopped
+  images:
+    build: ./images
+    environment:
+      - PYTHONUNBUFFERED=0
+    volumes:
+      - ./storage/images:/code/data
+    ports:
+      - "5000:80"
+    restart: unless-stopped
   tg-cli:
     build: ./tg-cli
     volumes:
