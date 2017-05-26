@@ -1,12 +1,10 @@
-from flask import send_file
+from flask import send_from_directory
 from flask.views import MethodView
 
-from ..service import ImageRetriever
+from ..config import image_retriever
 
 
 class APIController(MethodView):
-    retriever = ImageRetriever()
-
-    def get(self, img_id: str):
-        image = self.retriever.retrieve(img_id)
-        return send_file(image.content, mimetype=image.mime)
+    def get(self, path: str):
+        storage_path, file_name = image_retriever.retrieve(path)
+        return send_from_directory(storage_path, file_name)

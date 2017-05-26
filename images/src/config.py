@@ -21,7 +21,8 @@ def load_config() -> ConfigParser:
 
     def validate(conf: ConfigParser) -> ConfigParser:
         sections = {
-            'bot': ['token']
+            'bot': ['token'],
+            'storage': ['path']
         }
 
         for section, options in sections.items():
@@ -53,11 +54,9 @@ setup_logging()
 config = load_config()
 
 # IOC
-from .service.datasource import *
+from .service import DiskStorage, FileDownloader
+disk_storage = DiskStorage(config['storage'])
+file_downloader = FileDownloader()
 
-hdd_ds = HDDDataSource()
-ram_ds = RAMDataSource()
-web_ds = WebDataSource()
-
-# from service import *
-# image_retriever = ImageRetriever()
+from .service import ImageRetriever
+image_retriever = ImageRetriever(storage=disk_storage, downloader=file_downloader)
