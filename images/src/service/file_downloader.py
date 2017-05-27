@@ -1,8 +1,7 @@
 import logging
 import json
-from typing import Optional
 from urllib.request import urlopen
-from ..config import config, encoding
+from src.config import config, encoding
 
 
 class FileDownloader:
@@ -12,12 +11,12 @@ class FileDownloader:
     def __init__(self):
         self.token = config['bot']['token']
 
-    def download(self, file_id: str) -> Optional[bytes]:
+    def download(self, file_id):
         path = self.__resolve_path(file_id)
         return self.__get_content(path)
 
-    def __resolve_path(self, file_id: str) -> Optional[str]:
-        logging.info(f"Resolving file path: {file_id}")
+    def __resolve_path(self, file_id):
+        logging.info('Resolving file path: {}'.format(file_id))
 
         try:
             with urlopen(self.RESOLVE_API_URL % (self.token, file_id)) as response:
@@ -26,18 +25,18 @@ class FileDownloader:
                     return None
                 return data['result']['file_path']
         except Exception as e:
-            logging.warn(f"Failed to resolve image path: {e}")
+            logging.warn('Failed to resolve image path: {}'.format(e))
             return None
 
-    def __get_content(self, path: str) -> Optional[bytes]:
+    def __get_content(self, path):
         if path is None:
             return None
 
-        logging.info(f"Downloading image from path: {path}")
+        logging.info('Downloading image from path: {}'.format(path))
 
         try:
             with urlopen(self.DOWNLOAD_API_URL % (self.token, path)) as response:
                 return response.read()
         except Exception as e:
-            logging.warn(f"Failed to download file: {e}")
+            logging.warn('Failed to download file: {}'.format(e))
             return None

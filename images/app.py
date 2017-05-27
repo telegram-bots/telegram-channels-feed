@@ -1,6 +1,6 @@
 from flask import Flask
 
-from .controller import bp as api_bp
+from src.controller import bp as api_bp
 
 
 def create_app():
@@ -10,3 +10,6 @@ def create_app():
 
 
 app = create_app()
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=80, debug=True)

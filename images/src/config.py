@@ -8,8 +8,8 @@ import os
 encoding = 'utf-8'
 
 
-def load_config() -> ConfigParser:
-    def load() -> ConfigParser:
+def load_config():
+    def load():
         app_config = ConfigParser()
         app_config.read(os.path.join('resources', 'cfg', 'application.conf'), encoding=encoding)
 
@@ -19,7 +19,7 @@ def load_config() -> ConfigParser:
 
         return app_config
 
-    def validate(conf: ConfigParser) -> ConfigParser:
+    def validate(conf):
         sections = {
             'bot': ['token'],
             'storage': ['path']

@@ -15,11 +15,10 @@ services:
         condition: service_healthy
     restart: unless-stopped
   images:
-    build: ./images
-    environment:
-      - PYTHONUNBUFFERED=0
+    image: "jazzdd/alpine-flask:python3"
     volumes:
-      - ./storage/images:/code/data
+      - ./images:/app
+      - ./storage/images:/data
     ports:
       - "5000:80"
     restart: unless-stopped

@@ -1,7 +1,6 @@
 import logging
 import os
 import os.path
-from typing import Tuple
 
 
 class ImageRetriever:
@@ -9,11 +8,11 @@ class ImageRetriever:
         self.downloader = downloader
         self.storage = storage
 
-    def retrieve(self, img_id: str) -> Tuple[str, str]:
+    def retrieve(self, img_id):
         img_id = img_id.replace('.jpg', '')
 
         if not self.storage.contains(file_id=img_id):
-            logging.info(f"Image {img_id} not exists, downloading...")
+            logging.info('Image {} not exists, downloading...'.format(img_id))
             file = self.downloader.download(file_id=img_id)
             self.storage.store(file_id=img_id, content=file)
 
