@@ -2,10 +2,9 @@ version: '2.1'
 services:
   bot:
     build: ./bot
-    environment:
-      - PYTHONUNBUFFERED=0
     volumes:
-      - ./storage/bot:/code/data
+      - ./bot:/code
+      - ./storage/bot:/data
     depends_on:
       tg-cli:
         condition: service_healthy
