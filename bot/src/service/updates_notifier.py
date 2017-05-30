@@ -59,17 +59,23 @@ class UpdatesNotifier:
         if post.type != PostType.TEXT and post.file_id is not None:
             logging.info(f"Uploading file: {post.file_id}")
             path = os.path.join(os.sep, 'data', 'files', post.file_id)
-            file = self.bot.get_file(file_id=post.file_id)
-            file.download(path)
 
             try:
+                file = self.bot.get_file(file_id=post.file_id)
+                retry_call(
+                    file.download,
+                    fkwargs={'custom_path': path},
+                    tries=3,
+                    delay=10
+                )
+
                 result = retry_call(
                     self.message_route[post.type],
                     fkwargs={
                         'chat_id': self.tg_cli_id,
                         post.type: open(path, 'rb')
                     },
-                    tries=5,
+                    tries=3,
                     delay=10
                 )
 
@@ -77,7 +83,7 @@ class UpdatesNotifier:
                 callback = self.message_route[post.type]
                 args[post.type] = cached_file_id
             except Exception as e:
-                logging.warn(f"Failed to upload file {file}: {e}")
+                logging.warn(f"Failed to upload file: {e}")
 
         for notify in self.notifications.list_not_notified(info.channel_telegram_id, info.message_id):
             try:
