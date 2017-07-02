@@ -51,7 +51,7 @@ class Command:
         :return: URL of channel or None
         """
         try:
-            url = re.search('(?:.*)(?:t.me\/|@)(.*)', args[0]).group(1).strip()
+            url = re.search('(?:.*)(?:t.me\/|@)([^\/]*)(?:\/?)', args[0]).group(1).strip()
             return None if url == '' else url
         except:
             return None
