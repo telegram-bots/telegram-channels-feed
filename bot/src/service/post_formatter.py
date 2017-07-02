@@ -1,4 +1,5 @@
 import html
+import re
 
 from telegram.parsemode import ParseMode
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
@@ -68,10 +69,16 @@ class PostFormatter:
 
         if 'text_' in raw['content_']:
             text = raw['content_']['text_']
+            if text is not None:
+                text = self.__convert_entities_to_html(self.__replace_html_tags(text))
+            else:
+                text = ""
         elif 'caption_' in raw['content_']:
             text = raw['content_']['caption_']
+            if text is False:
+                text = ""
 
-        return "\n\n" + html.escape(text) if text is not None and text is not False else ""
+        return "\n\n" + text
 
     def __extract_first_link(self) -> str:
         raw = self.post_info.raw
@@ -91,6 +98,37 @@ class PostFormatter:
                     return f"<a href=\"{html.escape(link)}\">\xad</a>" if link is not None else ""
 
         return ""
+
+    def __replace_html_tags(self, text: str) -> str:
+        return text.replace('<', '&lt;') \
+            .replace('>', '&gt;') \
+            .replace('&', '&amp;')
+
+    def __convert_entities_to_html(self, text: str) -> str:
+        raw = self.post_info.raw
+
+        if 'entities_' in raw['content_']:
+            utf16text = raw['content_']['text_'].encode('utf-16-le')
+            entities = raw['content_']['entities_']
+
+            for entity in entities.values():
+                offset = entity['offset_']
+                length = entity['length_']
+                extracted = utf16text[offset * 2:(length + offset) * 2].decode('utf-16-le')
+
+                if entity['ID'] == 'MessageEntityTextUrl':
+                    url = entity['url_']
+                    text = text.replace(extracted, f"<a href=\"{url}\">{extracted}</a>")
+                elif entity['ID'] == 'MessageEntityBold':
+                    text = text.replace(extracted, f"<b>{extracted}</b>")
+                elif entity['ID'] == 'MessageEntityItalic':
+                    text = text.replace(extracted, f"<i>{extracted}</i>")
+                elif entity['ID'] == 'MessageEntityCode':
+                    text = text.replace(extracted, f"<code>{extracted}</code>")
+                elif entity['ID'] == 'MessageEntityPre':
+                    text = text.replace(extracted, f"<pre>{extracted}</pre>")
+
+        return text
 
     def __get_type(self) -> str:
         raw = self.post_info.raw
