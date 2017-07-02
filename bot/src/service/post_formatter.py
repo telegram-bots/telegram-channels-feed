@@ -12,7 +12,6 @@ class PostFormatter:
     """
     MAX_MESSAGE_LENGTH = {
         PostType.PHOTO: 200,
-        PostType.VIDEO: 200,
         PostType.TEXT: 4096
     }
 
@@ -51,7 +50,7 @@ class PostFormatter:
         return f"<b>new in</b> <a href=\"https://t.me/{self.channel.url}/{self.post_info.raw['id_']}\">{html.escape(self.channel.name)}</a>"
 
     def __generate_caption(self) -> str:
-        return f"via @{self.channel.url}"
+        return f"via {self.channel.name}(@{self.channel.url})"
 
     def __extract_text(self) -> str:
         text = None
@@ -71,11 +70,6 @@ class PostFormatter:
             photos = raw['content_']['photo_']['sizes_']
             for k in sorted(photos, reverse=True):
                 return photos[k]['photo_']['persistent_id_']
-        # elif 'video_' in raw['content_']:
-        #     photos = raw['content_']['photo_']['sizes_']
-        #     for k in sorted(photos, reverse=True):
-        #         link = photos[k]['photo_']['persistent_id_']
-        #         break
         elif 'entities_' in raw['content_']:
             utf16text = raw['content_']['text_'].encode('utf-16-le')
             entities = raw['content_']['entities_']
@@ -93,8 +87,6 @@ class PostFormatter:
 
         if 'photo_' in raw['content_']:
             return PostType.PHOTO
-        elif 'video' in raw['content_']:
-            return PostType.VIDEO
 
         return PostType.TEXT
 
@@ -104,4 +96,4 @@ class PostFormatter:
         if len(text) <= max_length:
             return text
 
-        return text[:max_length - 6].strip() + ' [...]'
+        return text[:max_length - 3].strip() + '...'

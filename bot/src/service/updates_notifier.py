@@ -23,8 +23,7 @@ class UpdatesNotifier:
         self.bot = bot
         self.message_route = {
             PostType.TEXT: self.bot.send_message,
-            PostType.PHOTO: self.bot.send_photo,
-            PostType.VIDEO: self.bot.send_video
+            PostType.PHOTO: self.bot.send_photo
         }
         self.queue_consumer.run(on_message_callback=self.on_message)
 
@@ -104,9 +103,9 @@ class UpdatesNotifier:
                     channel_id=channel.id,
                     message_id=info.message_id
                 )
-            except Exception as e:
+            except:
                 has_errors = True
-                logging.error(f"Failed to deliver message: {e}")
+                logging.exception(f"Failed to deliver message")
                 continue
 
         if has_errors:
