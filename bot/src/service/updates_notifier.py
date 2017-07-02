@@ -8,8 +8,8 @@ from retry.api import retry_call
 from telegram.ext.dispatcher import run_async
 
 from src.config import config, encoding
-from src.domain.post import PostType, PostInfo
-from src.domain.entities import Channel
+from src.domain.post import PostType, PostInfo, Post
+from src.domain.entities import Channel, User
 from src.service.post_formatter import PostFormatter
 
 
@@ -31,38 +31,62 @@ class UpdatesNotifier:
         return self
 
     def on_message(self, mq_channel, basic_deliver, properties, body):
-        logging.info(f"Received message #{basic_deliver.delivery_tag}")
-        logging.debug(f"From app {properties.app_id}: {body}")
+        def get_post_info(body):
+            json_data = json.loads(body.decode(encoding))
+            if json_data['ID'] == 'Message':
+                return PostInfo(
+                    channel_telegram_id=json_data['chat_id_'],
+                    message_id=int(json_data['id_']),
+                    date=datetime.fromtimestamp(json_data['date_']),
+                    content=json_data['content_']
+                )
+            elif json_data['ID'] == 'UpdateMessageContent':
+                return PostInfo(
+                    channel_telegram_id=json_data['chat_id_'],
+                    message_id=int(json_data['message_id_']),
+                    date=datetime.now(),
+                    content=json_data['new_content_']
+                )
 
-        json_obj = json.loads(body.decode(encoding))
-        info = PostInfo(
-            channel_telegram_id=json_obj['chat_id_'],
-            message_id=int(json_obj['id_']),
-            date=datetime.fromtimestamp(json_obj['date_']),
-            raw=json_obj
-        )
-        channel = self.notifications.get_channel_info(info.channel_telegram_id)
-        if channel is None:
-            channel = Channel()
-            channel.id = -1
-            channel.url = ""
-            channel.name = "removed"
+        def get_channel_info(channel_tg_id):
+            channel = self.notifications.get_channel_info(channel_tg_id)
+            if channel is None:
+                channel = Channel()
+                channel.id = -1
+                channel.url = ""
+                channel.name = "removed"
 
-        post = PostFormatter(channel, info).format()
-        has_errors = False
+            return channel
 
-        logging.debug(f"Formatted post: {post}")
+        def format_post(channel: Channel, info: PostInfo):
+            post = PostFormatter(channel, info).format()
+            logging.debug(f"Formatted post: {post}")
+            return post
 
-        callback = self.bot.send_message
-        args = {
-            'text': post.text,
-            'caption': post.text,
-            'parse_mode': post.mode,
-            'reply_markup': post.keyboard,
-            'disable_web_page_preview': not post.preview_enabled
-        }
+        def get_callback(post: Post):
+            if post.file_id is not False:
+                return self.message_route[post.type]
+            return self.bot.send_message
 
-        if post.type != PostType.TEXT and post.file_id is not None:
+        def get_args(post: Post, user: User):
+            args = {
+                'text': post.text,
+                'caption': post.text,
+                'parse_mode': post.mode,
+                'reply_markup': post.keyboard,
+                'disable_web_page_preview': not post.preview_enabled,
+                'chat_id': user.telegram_id
+            }
+
+            if post.file_id is not False:
+                args[post.type] = post.file_id
+
+            return args
+
+        def upload_file(post: Post):
+            if post.type == PostType.TEXT or post.file_id is None:
+                return False
+
             logging.info(f"Uploading file: {post.file_id}")
             path = os.path.join(os.sep, 'data', 'files', post.file_id)
 
@@ -85,31 +109,53 @@ class UpdatesNotifier:
                     delay=10
                 )
 
-                cached_file_id = result[post.type][-1]['file_id']
-                callback = self.message_route[post.type]
-                args[post.type] = cached_file_id
+                return result[post.type][-1]['file_id']
             except Exception as e:
                 logging.warning(f"Failed to upload file: {e}")
+                return False
+
+        def send_post(channel: Channel, user: User, post: Post):
+            logging.info(f"Sending channel {channel.id} content to user {user.id}")
+            retry_call(
+                callback,
+                fkwargs=get_args(post, user),
+                tries=5,
+                delay=10
+            )
+
+        def mark_subscription(channel: Channel, user: User, info: PostInfo):
+            logging.info(f"Setting subscription {user.id}:{channel.id} last_message_id to {info.message_id} ({info.date})")
+            self.notifications.mark_subscription(
+                user_id=user.id,
+                channel_id=channel.id,
+                message_id=info.message_id
+            )
+
+        def mark_channel(channel: Channel, info: PostInfo):
+            logging.info(f"Setting channel {channel.id} last_message_id to {info.message_id} ({info.date})")
+            self.notifications.mark_channel(
+                info.channel_telegram_id,
+                info.message_id
+            )
+
+        def acknowledge_message():
+            logging.info(f"Acknowledging message #{basic_deliver.delivery_tag}")
+            mq_channel.basic_ack(basic_deliver.delivery_tag)
+
+        logging.info(f"Received message #{basic_deliver.delivery_tag}")
+        logging.debug(f"From app {properties.app_id}: {body}")
+
+        info = get_post_info(body)
+        channel = get_channel_info(info.channel_telegram_id)
+        post = format_post(channel, info)
+        post.file_id = upload_file(post)
+        callback = get_callback(post)
+        has_errors = False
 
         for notify in self.notifications.list_not_notified(info.channel_telegram_id, info.message_id):
             try:
-                user = notify.user
-
-                logging.info(f"Sending channel {channel.id} content to user {user.id}")
-                args['chat_id'] = user.telegram_id
-                retry_call(
-                    callback,
-                    fkwargs=args,
-                    tries=5,
-                    delay=10
-                )
-
-                logging.info(f"Setting subscription {user.id}:{channel.id} last_message_id to {info.message_id} ({info.date})")
-                self.notifications.mark_subscription(
-                    user_id=user.id,
-                    channel_id=channel.id,
-                    message_id=info.message_id
-                )
+                send_post(channel, notify.user, post)
+                mark_subscription(channel, notify.user, info)
             except:
                 has_errors = True
                 logging.exception(f"Failed to deliver message")
@@ -118,11 +164,5 @@ class UpdatesNotifier:
         if has_errors:
             return
 
-        logging.info(f"Setting channel {channel.id} last_message_id to {info.message_id} ({info.date})")
-        self.notifications.mark_channel(
-            info.channel_telegram_id,
-            info.message_id
-        )
-
-        logging.info(f"Acknowledging message #{basic_deliver.delivery_tag}")
-        mq_channel.basic_ack(basic_deliver.delivery_tag)
+        mark_channel(channel, info)
+        acknowledge_message()

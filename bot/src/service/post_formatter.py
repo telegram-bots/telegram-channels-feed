@@ -1,5 +1,4 @@
 import html
-import re
 
 from telegram.parsemode import ParseMode
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
@@ -58,38 +57,38 @@ class PostFormatter:
         ]])
 
     def __generate_header(self) -> str:
-        return f"<b>new in</b> <a href=\"https://t.me/{self.channel.url}/{self.post_info.raw['id_']}\">{html.escape(self.channel.name)}</a>"
+        return f"<b>new in</b> <a href=\"https://t.me/{self.channel.url}/{self.post_info.message_id}\">{html.escape(self.channel.name)}</a>"
 
     def __generate_caption(self) -> str:
         return f"via {self.channel.name}(@{self.channel.url})"
 
     def __extract_text(self) -> str:
         text = None
-        raw = self.post_info.raw
+        content = self.post_info.content
 
-        if 'text_' in raw['content_']:
-            text = raw['content_']['text_']
+        if 'text_' in content:
+            text = content['text_']
             if text is not None:
                 text = self.__convert_entities_to_html(self.__replace_html_tags(text))
             else:
                 text = ""
-        elif 'caption_' in raw['content_']:
-            text = raw['content_']['caption_']
+        elif 'caption_' in content:
+            text = content['caption_']
             if text is False:
                 text = ""
 
         return "\n\n" + text
 
     def __extract_first_link(self) -> str:
-        raw = self.post_info.raw
+        content = self.post_info.content
 
-        if 'photo_' in raw['content_']:
-            photos = raw['content_']['photo_']['sizes_']
+        if 'photo_' in content:
+            photos = content['photo_']['sizes_']
             for k in sorted(photos, reverse=True):
                 return photos[k]['photo_']['persistent_id_']
-        elif 'entities_' in raw['content_']:
-            utf16text = raw['content_']['text_'].encode('utf-16-le')
-            entities = raw['content_']['entities_']
+        elif 'entities_' in content:
+            utf16text = content['text_'].encode('utf-16-le')
+            entities = content['entities_']
             for entity in entities.values():
                 if entity['ID'] == 'MessageEntityUrl':
                     offset = entity['offset_']
@@ -105,11 +104,11 @@ class PostFormatter:
             .replace('&', '&amp;')
 
     def __convert_entities_to_html(self, text: str) -> str:
-        raw = self.post_info.raw
+        content = self.post_info.content
 
-        if 'entities_' in raw['content_']:
-            utf16text = raw['content_']['text_'].encode('utf-16-le')
-            entities = raw['content_']['entities_']
+        if 'entities_' in content:
+            utf16text = content['text_'].encode('utf-16-le')
+            entities = content['entities_']
 
             for entity in entities.values():
                 offset = entity['offset_']
@@ -131,9 +130,7 @@ class PostFormatter:
         return text
 
     def __get_type(self) -> str:
-        raw = self.post_info.raw
-
-        if 'photo_' in raw['content_']:
+        if 'photo_' in self.post_info.content:
             return PostType.PHOTO
 
         return PostType.TEXT

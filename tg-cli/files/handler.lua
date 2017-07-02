@@ -128,5 +128,7 @@ function tdcli_update_callback(data)
                 reply(msg.chat_id_, msg.id_, "pong")
             end
         end
+    elseif (data.ID == "UpdateMessageContent") then
+        send_to_exchange(cjson.encode(data))
     end
 end
