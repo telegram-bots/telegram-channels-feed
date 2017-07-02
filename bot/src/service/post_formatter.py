@@ -1,6 +1,7 @@
 import html
 
 from telegram.parsemode import ParseMode
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 from src.domain.entities import Channel
 from src.domain.post import Post, PostInfo, PostType
@@ -43,8 +44,17 @@ class PostFormatter:
             type=post_type,
             mode=ParseMode.HTML,
             preview_enabled=first_link != "",
+            keyboard=self.__generate_keyboard(),
             file_id=file_id
         )
+
+    def __generate_keyboard(self) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup([[
+            InlineKeyboardButton(
+                'Mark as read',
+                callback_data='mark'
+            )
+        ]])
 
     def __generate_header(self) -> str:
         return f"<b>new in</b> <a href=\"https://t.me/{self.channel.url}/{self.post_info.raw['id_']}\">{html.escape(self.channel.name)}</a>"

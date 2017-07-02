@@ -9,6 +9,7 @@ from telegram.ext.dispatcher import run_async
 
 from src.config import config, encoding
 from src.domain.post import PostType, PostInfo
+from src.domain.entities import Channel
 from src.service.post_formatter import PostFormatter
 
 
@@ -41,6 +42,12 @@ class UpdatesNotifier:
             raw=json_obj
         )
         channel = self.notifications.get_channel_info(info.channel_telegram_id)
+        if channel is None:
+            channel = Channel()
+            channel.id = -1
+            channel.url = ""
+            channel.name = "removed"
+
         post = PostFormatter(channel, info).format()
         has_errors = False
 
@@ -82,7 +89,7 @@ class UpdatesNotifier:
                 callback = self.message_route[post.type]
                 args[post.type] = cached_file_id
             except Exception as e:
-                logging.warn(f"Failed to upload file: {e}")
+                logging.warning(f"Failed to upload file: {e}")
 
         for notify in self.notifications.list_not_notified(info.channel_telegram_id, info.message_id):
             try:

@@ -18,6 +18,7 @@ class Bot:
         logging.info("Bot started")
 
         self.dispatcher.add_handler(CommandHandler())
+        self.dispatcher.add_handler(CallbackHandler())
 
         updates_notifier.instance(self.updater.bot)
 
