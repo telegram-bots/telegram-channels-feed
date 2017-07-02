@@ -63,7 +63,7 @@ class PostFormatter:
         return f"via {self.channel.name}(@{self.channel.url})"
 
     def __extract_text(self) -> str:
-        text = None
+        text = ""
         content = self.post_info.content
 
         if 'text_' in content:
