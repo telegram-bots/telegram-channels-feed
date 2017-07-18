@@ -84,32 +84,48 @@ class UpdatesNotifier:
             return args
 
         def upload_file(post: Post):
+            def get_file_path(file_id: str):
+                return os.path.join(os.sep, 'data', 'files', file_id)
+
+            def remove_file(file_id: str):
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
+
+            def download_file(file_id: str, to_path: str):
+                file = self.bot.get_file(file_id=file_id)
+                retry_call(
+                    file.download,
+                    fkwargs={'custom_path': to_path},
+                    tries=5,
+                    delay=5
+                )
+
+            def cache_file(path: str, post_type: str):
+                result = retry_call(
+                    self.message_route[post_type],
+                    fkwargs={
+                        'chat_id': self.tg_cli_id,
+                        post_type: open(path, 'rb')
+                    },
+                    tries=5,
+                    delay=5
+                )
+                return result[post_type][-1]['file_id']
+
             if post.type == PostType.TEXT or post.file_id is None:
                 return False
 
             logging.info(f"Uploading file: {post.file_id}")
-            path = os.path.join(os.sep, 'data', 'files', post.file_id)
+            path = get_file_path(post.file_id)
 
             try:
-                file = self.bot.get_file(file_id=post.file_id)
-                retry_call(
-                    file.download,
-                    fkwargs={'custom_path': path},
-                    tries=3,
-                    delay=10
-                )
+                download_file(post.file_id, path)
+                file_id = cache_file(path, post.type)
+                remove_file(path)
 
-                result = retry_call(
-                    self.message_route[post.type],
-                    fkwargs={
-                        'chat_id': self.tg_cli_id,
-                        post.type: open(path, 'rb')
-                    },
-                    tries=3,
-                    delay=10
-                )
-
-                return result[post.type][-1]['file_id']
+                return file_id
             except Exception as e:
                 logging.warning(f"Failed to upload file: {e}")
                 return False
