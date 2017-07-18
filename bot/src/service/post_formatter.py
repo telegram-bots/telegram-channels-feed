@@ -12,7 +12,7 @@ class PostFormatter:
     Formats a telegram message into text representation.
     """
     MAX_MESSAGE_LENGTH = {
-        PostType.PHOTO: 200,
+        PostType.PHOTO: 1024,
         PostType.TEXT: 4096
     }
 
@@ -57,10 +57,10 @@ class PostFormatter:
         ]])
 
     def __generate_header(self) -> str:
-        return f"<b>new in</b> <a href=\"https://t.me/{self.channel.url}/{self.post_info.message_id}\">{html.escape(self.channel.name)}</a>"
+        return f"<b><a href=\"https://t.me/{self.channel.url}/{self.post_info.message_id}\">{html.escape(self.channel.name)}</a>:</b>"
 
     def __generate_caption(self) -> str:
-        return f"via {self.channel.name}(@{self.channel.url})"
+        return f"<b><a href=\"https://t.me/{self.channel.url}/{self.post_info.message_id}\">{html.escape(self.channel.name)}</a></b>"
 
     def __extract_text(self) -> str:
         text = ""
