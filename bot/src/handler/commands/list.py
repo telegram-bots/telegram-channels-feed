@@ -27,7 +27,7 @@ class List(Base):
         if len(channels) == 0:
             return "You don't have active subscriptions."
 
-        channels.sort(key = lambda x: x['name'])
+        channels.sort(key=lambda c: c.name)
 
         result = []
         counter = 1
