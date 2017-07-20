@@ -1,0 +1,1 @@
+*/5 * * * * kill $(pgrep telegram-cli) > /dev/null 2>&1

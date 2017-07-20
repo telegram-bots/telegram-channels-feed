@@ -1,0 +1,2 @@
+#!/bin/bash
+service cron start && /bin/telegram-cli --json -P 4458 --accept-any-tcp --disable-readline --config /home/telegram/config.cfg
