@@ -50,15 +50,10 @@ encoding = 'utf-8'
 config = validate(extend(load()))
 
 # IOC
-from .db import DB
-from .tg_cli import TelegramCLI
-db = DB(config['db'])
-tg_cli = TelegramCLI(config['tg-cli'])
-
-from .repository import *
-user_repository = UserRepository()
-channel_repository = ChannelRepository()
-subscription_repository = SubscriptionRepository()
-
 from .service import *
-subscriptions = Subscriptions()
+notifications = Notifications()
+queue_consumer = QueueConsumer(config['rabbit'])
+updates_notifier = UpdatesNotifier(
+    notifications=notifications,
+    queue_consumer=queue_consumer
+)

@@ -10,9 +10,20 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
+    restart: unless-stopped
+
+  sender:
+    build: ./sender
+    volumes:
+      - ./sender:/code
+      - ./storage/sender:/data
+    depends_on:
+      db:
+        condition: service_healthy
       rabbit:
         condition: service_healthy
     restart: unless-stopped
+
   tg-cli:
     build: ./tg-cli
     volumes:
@@ -23,6 +34,7 @@ services:
       rabbit:
         condition: service_healthy
     restart: unless-stopped
+
   db:
     image: "healthcheck/postgres:alpine"
     volumes:
@@ -30,6 +42,7 @@ services:
     ports:
       - "5432:5432"
     restart: unless-stopped
+
   rabbit:
     image: "rednblack/rabbitmq"
     hostname: rabbit

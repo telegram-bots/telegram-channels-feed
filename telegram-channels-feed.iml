@@ -8,6 +8,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/bot" />
+    <content url="file://$MODULE_DIR$/sender" />
     <content url="file://$MODULE_DIR$/tg-cli" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
