@@ -31,7 +31,7 @@ class TelegramCLI:
 
     def subscribe_to_channel(self, id_: int):
         command = '{"ID": "AddChatMember", "chat_id_": %d, "user_id_": %d, "forward_limit_": 2}'
-        response = self.__send(command % (id_, self.url.username))
+        response = self.__send(command % (id_, int(self.url.username)))
         json_data = json.loads(response[0], encoding=encoding)
 
         if json_data['ID'] != 'Ok':
@@ -39,7 +39,7 @@ class TelegramCLI:
 
     def unsubscribe_from_channel(self, id_: int):
         command = '{"ID": "ChangeChatMemberStatus", "chat_id_": %d, "user_id_": %d, "status_": {"ID": "ChatMemberStatusLeft"}}'
-        response = self.__send(command % (id_, self.url.username))
+        response = self.__send(command % (id_, int(self.url.username)))
         json_data = json.loads(response[0], encoding=encoding)
 
         if json_data['ID'] != 'Ok':
