@@ -10,14 +10,21 @@ class Notifications:
     def get_channel_info(self, channel_telegram_id) -> Optional[Channel]:
         return db.session.query(Channel).filter(Channel.telegram_id == channel_telegram_id).first()
 
-    def list_not_notified(self, channel_telegram_id: int, message_id: int) -> Generator[Subscription, None, None]:
+    def list_not_notified(
+            self,
+            channel_telegram_id: int,
+            message_id: int,
+            ignore_message_id: bool
+    ) -> Generator[Subscription, None, None]:
         query = db.session \
             .query(Subscription) \
             .options(joinedload(Subscription.user)) \
             .join(Subscription.channel) \
-            .filter(Channel.telegram_id == channel_telegram_id) \
-            .filter(or_(Channel.last_message_id < message_id, Channel.last_message_id == None)) \
-            .filter(or_(Subscription.last_message_id < message_id, Subscription.last_message_id == None))
+            .filter(Channel.telegram_id == channel_telegram_id)
+
+        if not ignore_message_id:
+            query = query.filter(or_(Channel.last_message_id < message_id, Channel.last_message_id == None)) \
+                .filter(or_(Subscription.last_message_id < message_id, Subscription.last_message_id == None))
 
         return db.get_lazy(query)
 

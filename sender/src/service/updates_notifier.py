@@ -42,14 +42,16 @@ class UpdatesNotifier:
                     channel_telegram_id=json_data['chat_id_'],
                     message_id=int(json_data['id_']),
                     date=datetime.fromtimestamp(json_data['date_']),
-                    content=json_data['content_']
+                    content=json_data['content_'],
+                    update=False
                 )
             elif json_data['ID'] == 'UpdateMessageContent':
                 return PostInfo(
                     channel_telegram_id=json_data['chat_id_'],
                     message_id=int(json_data['message_id_']),
                     date=datetime.now(),
-                    content=json_data['new_content_']
+                    content=json_data['new_content_'],
+                    update=True
                 )
 
         def get_channel_info(channel_tg_id):
@@ -172,16 +174,16 @@ class UpdatesNotifier:
         callback = get_callback(post)
         has_errors = False
 
-        for notify in self.notifications.list_not_notified(info.channel_telegram_id, info.message_id):
+        for notify in self.notifications.list_not_notified(info.channel_telegram_id, info.message_id, info.update):
             try:
                 send_post(channel, notify.user, post)
                 mark_subscription(channel, notify.user, info)
             except:
                 has_errors = True
-                logging.exception(f"Failed to deliver message")
+                logging.exception("Failed to deliver message")
                 continue
 
-        if has_errors:
+        if has_errors and not info.update:
             return
 
         mark_channel(channel, info)
