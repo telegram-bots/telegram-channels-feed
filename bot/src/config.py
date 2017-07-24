@@ -1,4 +1,6 @@
 # Config
+import logging
+import logging.config
 import os.path
 from configparser import ConfigParser
 
@@ -7,7 +9,20 @@ import os
 
 def load() -> ConfigParser:
     app_config = ConfigParser()
-    app_config.read(os.path.join('resources', 'cfg', 'application.conf'), encoding=encoding)
+    app_config.read_dict({
+        'bot': {
+            'token': os.getenv('CF_BOT_TOKEN')
+        },
+        'db': {
+            'url': os.getenv('CF_DB_URL')
+        },
+        'tg-cli': {
+            'url': os.getenv('CF_TGCLI_URL')
+        },
+        'updates': {
+            'mode': 'polling'
+        }
+    })
 
     user_app_config = os.getenv('CONFIG_PATH', './application.conf')
     if os.path.exists(user_app_config) and os.path.isfile(user_app_config):
@@ -27,10 +42,9 @@ def extend(conf: ConfigParser) -> ConfigParser:
 
 def validate(conf: ConfigParser) -> ConfigParser:
     sections = {
-        'bot': ['token', 'name'],
-        'tg-cli': ['id', 'host', 'port'],
-        'db': ['host', 'port', 'name', 'user', 'password'],
-        'rabbit': ['host', 'port', 'user', 'password', 'vh'],
+        'bot': ['token'],
+        'tg-cli': ['url'],
+        'db': ['url'],
         'updates': ['mode']
     }
 
@@ -46,7 +60,19 @@ def validate(conf: ConfigParser) -> ConfigParser:
     return conf
 
 
+def setup_logging():
+    log_config = ConfigParser()
+    log_config.read(os.path.join('resources', 'cfg', 'logging.conf'), encoding=encoding)
+
+    user_log_config = os.getenv('LOGGING_CONFIG_PATH', './logging.conf')
+    if os.path.exists(user_log_config) and os.path.isfile(user_log_config):
+        log_config.read(user_log_config, encoding=encoding)
+
+    logging.config.fileConfig(log_config)
+
+
 encoding = 'utf-8'
+setup_logging()
 config = validate(extend(load()))
 
 # IOC

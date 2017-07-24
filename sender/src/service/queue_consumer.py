@@ -21,7 +21,7 @@ class QueueConsumer:
         self.channel = None
         self.closing = False
         self.consumer_tag = None
-        self.url = f"amqp://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{config['vh']}"
+        self.url = config['url']
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()

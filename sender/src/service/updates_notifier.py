@@ -3,6 +3,7 @@ import logging
 import os
 import os.path
 from datetime import datetime
+from urllib.parse import urlparse
 
 from retry.api import retry_call
 from telegram.ext.dispatcher import run_async
@@ -17,7 +18,7 @@ class UpdatesNotifier:
     def __init__(self, notifications, queue_consumer):
         self.notifications = notifications
         self.queue_consumer = queue_consumer
-        self.tg_cli_id = config['tg-cli']['id']
+        self.tg_cli_user = urlparse(config['tg-cli']).username
 
     @run_async
     def instance(self, bot):
@@ -106,7 +107,7 @@ class UpdatesNotifier:
                 result = retry_call(
                     self.message_route[post_type],
                     fkwargs={
-                        'chat_id': self.tg_cli_id,
+                        'chat_id': self.tg_cli_user,
                         post_type: open(path, 'rb')
                     },
                     tries=5,

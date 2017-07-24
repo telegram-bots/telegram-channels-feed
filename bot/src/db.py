@@ -10,9 +10,7 @@ from src.domain.entities import *
 
 class DB:
     def __init__(self, config):
-        self.engine = create_engine(
-            f"postgresql://{config['user']}@{config['host']}:{config.getint('port')}/{config['name']}"
-        )
+        self.engine = create_engine(config['url'])
         Base.metadata.bind = self.engine
         self.session = sessionmaker(bind=self.engine)()
 

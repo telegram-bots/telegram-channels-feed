@@ -2,6 +2,7 @@ version: '2.1'
 services:
   bot:
     build: ./bot
+    env_file: .app_env
     volumes:
       - ./bot:/code
       - ./storage/bot:/data
@@ -14,6 +15,7 @@ services:
 
   sender:
     build: ./sender
+    env_file: .app_env
     volumes:
       - ./sender:/code
       - ./storage/sender:/data
@@ -26,6 +28,7 @@ services:
 
   tg-cli:
     build: ./tg-cli
+    env_file: .app_env
     volumes:
       - ./storage/tg-cli:/telegram
     ports:

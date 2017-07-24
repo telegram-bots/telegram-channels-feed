@@ -1,0 +1,4 @@
+CF_BOT_TOKEN=
+CF_DB_URL=postgresql://postgres@db:5432/postgres
+CF_RABBIT_URL=amqp://guest:guest@rabbit:5672/
+CF_TGCLI_URL=tgcli://@tg-cli:4458
