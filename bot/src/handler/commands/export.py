@@ -1,6 +1,7 @@
 import csv
 
 import os
+import os.path
 from typing import List
 
 from src.config import subscriptions
@@ -17,11 +18,11 @@ class Export(Base):
         if len(rows) == 0:
             self.reply(command, "You don't have active subscriptions.")
 
-        file = f"data/{command.chat_id}_export.csv"
-        self.__create_csv(file, subscriptions.list(command))
+        path = os.path.join(os.sep, 'data', 'export', f"data/{command.chat_id}_export.csv")
+        self.__create_csv(path, subscriptions.list(command))
         self.bot.send_document(chat_id=command.chat_id,
-                               document=open(file, 'rb'))
-        os.remove(file)
+                               document=open(path, 'rb'))
+        os.remove(path)
 
     @staticmethod
     def __create_csv(file: str, rows: List[Channel]):
