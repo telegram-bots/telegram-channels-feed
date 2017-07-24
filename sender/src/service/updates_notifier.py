@@ -2,11 +2,11 @@ import json
 import logging
 import os
 import os.path
+from threading import Thread
 from datetime import datetime
 from urllib.parse import urlparse
 
 from retry.api import retry_call
-from telegram.ext.dispatcher import run_async
 
 from src.config import config, encoding
 from src.domain.post import PostType, PostInfo, Post
@@ -18,16 +18,19 @@ class UpdatesNotifier:
     def __init__(self, notifications, queue_consumer):
         self.notifications = notifications
         self.queue_consumer = queue_consumer
-        self.tg_cli_user = urlparse(config['tg-cli']).username
+        self.tg_cli_user = urlparse(config['tg-cli']['url']).username
 
-    @run_async
     def instance(self, bot):
-        self.bot = bot
-        self.message_route = {
-            PostType.TEXT: self.bot.send_message,
-            PostType.PHOTO: self.bot.send_photo
-        }
-        self.queue_consumer.run(on_message_callback=self.on_message)
+        def run():
+            self.bot = bot
+            self.message_route = {
+                PostType.TEXT: self.bot.send_message,
+                PostType.PHOTO: self.bot.send_photo
+            }
+            self.queue_consumer.run(on_message_callback=self.on_message)
+
+        thread = Thread(target=run)
+        thread.start()
 
         return self
 

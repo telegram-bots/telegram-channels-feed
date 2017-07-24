@@ -76,6 +76,9 @@ setup_logging()
 config = validate(extend(load()))
 
 # IOC
+from .db import DB
+db = DB(config['db'])
+
 from .service import *
 notifications = Notifications()
 queue_consumer = QueueConsumer(config['rabbit'])
