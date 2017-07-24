@@ -21,11 +21,12 @@ class PostType:
 
 
 class PostInfo:
-    def __init__(self, channel_telegram_id: int, message_id: int, date: datetime, content):
+    def __init__(self, channel_telegram_id: int, message_id: int, date: datetime, content, update: bool):
         self.channel_telegram_id = channel_telegram_id
         self.message_id = message_id
         self.date = date
         self.content = content
+        self.update = update
 
     def __str__(self):
         return str(self.__dict__)
