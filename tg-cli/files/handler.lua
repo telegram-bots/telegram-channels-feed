@@ -1,17 +1,20 @@
 print("STARTED HANDLER INITIALISATION")
 
 ROUTING_KEY = "#"
-HOST = "rabbit"
-PORT = 5672
 
+local url = require("net.url")
 local cjson = require("cjson")
 local amqp = require("amqp")
+local rabbit_url = url.parse(os.getenv("CF_RABBIT_URL"))
 local channel
 local connection = {
     role = "publisher",
     routing_key = ROUTING_KEY,
     exchange = "channels_feed",
-    queue = "channels_feed.single"
+    queue = "channels_feed.single",
+    user = rabbit_url.user,
+    password = rabbit_url.password,
+    virtual_host = rabbit_url.path
 }
 local exchange = {
     typ = "direct",
@@ -46,11 +49,11 @@ function connect()
 
     channel = amqp.new(connection)
 
-    local conn_ok, conn_err = channel:connect(HOST, PORT)
+    local conn_ok, conn_err = channel:connect(rabbit_url.host, rabbit_url.port)
     while conn_ok == nil do
         print("CONNECTION LOST: " .. conn_err .. ". TRYING TO RECONNECT...")
         sleep(5)
-        conn_ok = channel:connect(HOST, PORT)
+        conn_ok = channel:connect(rabbit_url.host, rabbit_url.port)
     end
 
     local init_ok, init_err = channel:setup()

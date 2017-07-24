@@ -21,7 +21,7 @@ RUN curl -L "http://luajit.org/download/LuaJIT-${LUAJIT_VERSION}.tar.gz" -o ./Lu
     cd luarocks-${LUAROCKS_VERSION} && \
     ./configure && make build && make install && make clean && \
     cd .. && rm -rf luarocks-${LUAROCKS_VERSION} && \
-    luarocks install lua-cjson && luarocks install /home/telegram/amqp-2.0-1.rockspec
+    luarocks install lua-cjson && luarocks install net-url && luarocks install /home/telegram/amqp-2.0-1.rockspec
 # Container scheduled kill
 COPY kill.cron /etc/cron.d/kill
 RUN crontab /etc/cron.d/kill
