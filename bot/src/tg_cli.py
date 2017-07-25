@@ -11,7 +11,7 @@ from src.config import encoding
 
 class TelegramCLI:
     EOL = '\n'
-    BUFFER_SIZE = 8192
+    BUFFER_SIZE = 32768
 
     def __init__(self, config):
         self.url = urlparse(config['url'])
@@ -30,7 +30,7 @@ class TelegramCLI:
         return channel_id, channel_name
 
     def subscribe_to_channel(self, id_: int):
-        command = '{"ID": "AddChatMember", "chat_id_": %d, "user_id_": %d, "forward_limit_": 2}'
+        command = '{"ID": "AddChatMember", "chat_id_": %d, "user_id_": %d, "forward_limit_": 1}'
         response = self.__send(command % (id_, int(self.url.username)))
         json_data = json.loads(response[0], encoding=encoding)
 
@@ -38,7 +38,11 @@ class TelegramCLI:
             raise ConnectionError(f"[tg-cli] Failed to subscribe: {json_data}")
 
     def unsubscribe_from_channel(self, id_: int):
-        command = '{"ID": "ChangeChatMemberStatus", "chat_id_": %d, "user_id_": %d, "status_": {"ID": "ChatMemberStatusLeft"}}'
+        command = ('{"ID": "ChangeChatMemberStatus", '
+                   '"chat_id_": %d, '
+                   '"user_id_": %d, '
+                   '"status_": {"ID": "ChatMemberStatusLeft"}}'
+                   )
         response = self.__send(command % (id_, int(self.url.username)))
         json_data = json.loads(response[0], encoding=encoding)
 
@@ -52,13 +56,14 @@ class TelegramCLI:
 
         try:
             self.__disconnect()
-            logging.debug(f"[tg-cli] Connecting to {self.url.hostname}:{self.url.port}")
+            logging.debug(f"[tg-cli] Connecting...")
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.connect((self.url.hostname, self.url.port))
-            logging.debug('[tg-cli] Connected')
+            logging.debug(f"[tg-cli] Connected to {self.url.hostname}:{self.url.port}")
         except socket.error as e:
             self.__disconnect()
-            logging.warning(f"[tg-cli] Failed to connect : {str(e)}")
+            logging.warning(f"[tg-cli] Failed to connect: {str(e)}")
+            logging.debug(f"[tg-cli] Retrying...")
             time.sleep(5)
             self.__connect(retries - 1)
         except Exception as e:
@@ -67,8 +72,10 @@ class TelegramCLI:
 
     def __disconnect(self):
         if self.socket is not None:
+            logging.debug(f"[tg-cli] Disconnecting...")
             self.socket.close()
             self.socket = None
+            logging.debug(f"[tg-cli] Disconnected from {self.url.hostname}:{self.url.port}")
 
     def __send(self, command) -> List[str]:
         try:
@@ -78,12 +85,18 @@ class TelegramCLI:
                 command = str.join(' ', command.strip(self.EOL))
             command = (command + self.EOL).encode(encoding)
 
+            logging.debug(f"[tg-cli] Executing command: {command}")
+
             self.socket.sendall(command)
             time.sleep(0.5)
-            return self.socket.recv(self.BUFFER_SIZE) \
-                       .decode(encoding) \
-                       .strip() \
-                       .split(self.EOL)[1:]
+            response = self.socket.recv(self.BUFFER_SIZE) \
+                           .decode(encoding) \
+                           .strip() \
+                           .split(self.EOL)[1:]
+
+            logging.debug(f"[tg-cli] Got response: {response}")
+
+            return response
         except socket.error:
             self.__send(command)
         finally:
