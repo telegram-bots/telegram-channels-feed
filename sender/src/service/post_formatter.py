@@ -103,29 +103,52 @@ class PostFormatter:
             .replace('>', '&gt;') \
             .replace('&', '&amp;')
 
+    def __is_nested_tag_bound(self, text: str, offset: int, length: int):
+        tags = [
+            ('<a', '</a>'),
+            ('<code>', '</code>'),
+            ('<pre>', '<pre>'),
+            ('<b>', '</b>'),
+            ('<i>', '</i>'),
+        ]
+
+        for start_tag, end_tag in tags:
+            start_tag_pos = text.find(start_tag, offset)
+            end_tag_pos = text.find(end_tag, offset + length)
+
+            if start_tag_pos != -1 and end_tag_pos != -1:
+                return True
+
+        return False
+
     def __convert_entities_to_html(self, text: str) -> str:
         content = self.post_info.content
 
-        if 'entities_' in content:
-            utf16text = content['text_'].encode('utf-16-le')
-            entities = content['entities_']
+        if 'entities_' not in content:
+            return text
 
-            for entity in entities.values():
-                offset = entity['offset_']
-                length = entity['length_']
-                extracted = utf16text[offset * 2:(length + offset) * 2].decode('utf-16-le')
+        utf16text = content['text_'].encode('utf-16-le')
+        entities = content['entities_']
 
-                if entity['ID'] == 'MessageEntityTextUrl':
-                    url = entity['url_']
-                    text = text.replace(extracted, f"<a href=\"{url}\">{extracted}</a>")
-                elif entity['ID'] == 'MessageEntityBold':
-                    text = text.replace(extracted, f"<b>{extracted}</b>")
-                elif entity['ID'] == 'MessageEntityItalic':
-                    text = text.replace(extracted, f"<i>{extracted}</i>")
-                elif entity['ID'] == 'MessageEntityCode':
-                    text = text.replace(extracted, f"<code>{extracted}</code>")
-                elif entity['ID'] == 'MessageEntityPre':
-                    text = text.replace(extracted, f"<pre>{extracted}</pre>")
+        for entity in entities.values():
+            offset = entity['offset_']
+            length = entity['length_']
+            extracted = utf16text[offset * 2:(length + offset) * 2].decode('utf-16-le')
+
+            if self.__is_nested_tag_bound(text, offset, length):
+                continue
+
+            if entity['ID'] == 'MessageEntityTextUrl':
+                url = entity['url_']
+                text = text.replace(extracted, f"<a href=\"{url}\">{extracted}</a>", 1)
+            elif entity['ID'] == 'MessageEntityBold':
+                text = text.replace(extracted, f"<b>{extracted}</b>", 1)
+            elif entity['ID'] == 'MessageEntityItalic':
+                text = text.replace(extracted, f"<i>{extracted}</i>", 1)
+            elif entity['ID'] == 'MessageEntityCode':
+                text = text.replace(extracted, f"<code>{extracted}</code>", 1)
+            elif entity['ID'] == 'MessageEntityPre':
+                text = text.replace(extracted, f"<pre>{extracted}</pre>", 1)
 
         return text
 
