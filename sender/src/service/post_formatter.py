@@ -2,6 +2,7 @@ import html
 
 from telegram.parsemode import ParseMode
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+from typing import Optional
 
 from src.domain.entities import Channel
 from src.domain.post import Post, PostInfo, PostType
@@ -104,32 +105,51 @@ class PostFormatter:
             .replace('&', '&amp;')
 
     def __convert_entities_to_html(self, text: str) -> str:
-        content = self.post_info.content
+        def convert(utf16: bytes, entity: dict, start_pos: int, end_pos: int) -> Optional[str]:
+            e_type = entity['ID']
+            extracted = utf16[start_pos:end_pos].decode('utf-16-le')
 
+            if e_type == 'MessageEntityTextUrl':
+                return f"<a href=\"{entity['url_']}\">{extracted}</a>"
+            elif e_type == 'MessageEntityBold':
+                return f"<b>{extracted}</b>"
+            elif e_type == 'MessageEntityItalic':
+                return f"<i>{extracted}</i>"
+            elif e_type == 'MessageEntityCode':
+                return f"<code>{extracted}</code>"
+            elif e_type == 'MessageEntityPre':
+                return f"<pre>{extracted}</pre>"
+
+            return None
+
+        def collect(utf16: bytes, entities: dict) -> list:
+            replacements = [(e, e['offset_'] * 2, (e['length_'] + e['offset_']) * 2) for e in entities.values()]
+            replacements = [(convert(utf16, *r),) + r[1:] for r in replacements]
+            replacements = sorted(
+                [(r[0].encode('utf-16-le'),) + r[1:] for r in replacements if r[0] is not None],
+                key=lambda r: r[1]
+            )
+
+            return replacements
+
+        def combine(utf16: bytes, replacements: list) -> str:
+            byte_array = bytearray()
+            cur_pos = 0
+
+            for replacement, start_pos, end_pos in replacements:
+                byte_array += utf16[cur_pos:start_pos]
+                byte_array += replacement
+                cur_pos = end_pos
+
+            return (byte_array + utf16[cur_pos:]).decode('utf-16-le')
+
+        content = self.post_info.content
         if 'entities_' not in content:
             return text
 
-        utf16text = content['text_'].encode('utf-16-le')
-        entities = content['entities_']
-
-        for entity in entities.values():
-            offset = entity['offset_']
-            length = entity['length_']
-            extracted = utf16text[offset * 2:(length + offset) * 2].decode('utf-16-le')
-
-            if entity['ID'] == 'MessageEntityTextUrl':
-                url = entity['url_']
-                text = text.replace(extracted, f"<a href=\"{url}\">{extracted}</a>", 1)
-            elif entity['ID'] == 'MessageEntityBold':
-                text = text.replace(extracted, f"<b>{extracted}</b>", 1)
-            elif entity['ID'] == 'MessageEntityItalic':
-                text = text.replace(extracted, f"<i>{extracted}</i>", 1)
-            elif entity['ID'] == 'MessageEntityCode':
-                text = text.replace(extracted, f"<code>{extracted}</code>", 1)
-            elif entity['ID'] == 'MessageEntityPre':
-                text = text.replace(extracted, f"<pre>{extracted}</pre>", 1)
-
-        return text
+        utf16bytes = text.encode('utf-16-le')
+        replacements = collect(utf16bytes, content['entities_'])
+        return combine(utf16bytes, replacements)
 
     def __get_type(self) -> str:
         if 'photo_' in self.post_info.content:
