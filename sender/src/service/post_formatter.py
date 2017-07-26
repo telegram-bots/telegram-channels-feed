@@ -103,24 +103,6 @@ class PostFormatter:
             .replace('>', '&gt;') \
             .replace('&', '&amp;')
 
-    def __is_nested_tag_bound(self, text: str, offset: int, length: int):
-        tags = [
-            ('<a', '</a>'),
-            ('<code>', '</code>'),
-            ('<pre>', '<pre>'),
-            ('<b>', '</b>'),
-            ('<i>', '</i>'),
-        ]
-
-        for start_tag, end_tag in tags:
-            start_tag_pos = text.find(start_tag, offset)
-            end_tag_pos = text.find(end_tag, offset + length)
-
-            if start_tag_pos != -1 and end_tag_pos != -1:
-                return True
-
-        return False
-
     def __convert_entities_to_html(self, text: str) -> str:
         content = self.post_info.content
 
@@ -134,9 +116,6 @@ class PostFormatter:
             offset = entity['offset_']
             length = entity['length_']
             extracted = utf16text[offset * 2:(length + offset) * 2].decode('utf-16-le')
-
-            if self.__is_nested_tag_bound(text, offset, length):
-                continue
 
             if entity['ID'] == 'MessageEntityTextUrl':
                 url = entity['url_']
