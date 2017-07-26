@@ -3,6 +3,11 @@ class GenericSettingsError(Exception):
         super(Exception, self).__init__(message)
 
 
+class RedirectNotAllowed(GenericSettingsError):
+    def __init__(self):
+        super(GenericSettingsError, self).__init__("Redirect to subscribed channel is not allowed!")
+
+
 class IllegalChannelUrlError(GenericSettingsError):
     def __init__(self):
         super(IllegalChannelUrlError, self).__init__("Illegal channel url!")

@@ -1,4 +1,5 @@
 from sqlalchemy import or_
+from sqlalchemy.sql import text
 from sqlalchemy.orm import joinedload
 from typing import Generator
 
@@ -34,6 +35,21 @@ class SubscriptionRepository:
             .query(Subscription)\
             .filter(Subscription.channel_id == channel_id)\
             .count()
+
+    def has(self, user_id: int, channel_url: str) -> bool:
+        return db.session \
+           .execute(
+                text(
+                    """
+                    SELECT COUNT(*)
+                    FROM Subscriptions AS sub
+                    JOIN Users AS u ON u.id = sub.user_id
+                    JOIN Channels AS ch ON ch.id = sub.channel_id
+                    WHERE u.id = :user_id AND ch.url = :channel_url
+                    """
+                ),
+                {'user_id': user_id, 'channel_url': channel_url}
+            ).fetchone()[0] > 0
 
     def all(self, channel_telegram_id: int, message_id: int) -> Generator[Subscription, None, None]:
         query = db.session \

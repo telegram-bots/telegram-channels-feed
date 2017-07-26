@@ -1,6 +1,6 @@
 import logging
 
-from src.config import db, user_repository
+from src.config import db, user_repository, subscription_repository
 from src.domain.command import Command
 from src.exception.settings_exception import *
 
@@ -15,10 +15,17 @@ class Settings:
     def add_channel_redirect(self, command: Command):
         def callback():
             user = user_repository.get_or_create(telegram_id=command.chat_id)
-            user_repository.change_settings(telegram_id=user.telegram_id, redirect_url=f"@{command.channel_url}")
+
+            has_subscription = subscription_repository.has(user_id=user.id, channel_url=command.channel_url)
+            if has_subscription:
+                raise RedirectNotAllowed()
+
+            user_repository.change_settings(id_=user.id, redirect_url=f"@{command.channel_url}")
 
         try:
             db.execute_in_transaction(callback)
+        except GenericSettingsError:
+            raise
         except Exception as e:
             logging.error(f"Failed to add redirect: {e}")
             raise RedirectChangeError("Failed to add redirect")
@@ -29,10 +36,12 @@ class Settings:
             if user is None or user.redirect_url is None:
                 raise RedirectChangeError("You don't have added redirect!")
 
-            user_repository.change_settings(telegram_id=user.telegram_id, redirect_url=None)
+            user_repository.change_settings(id_=user.id, redirect_url=None)
 
         try:
             db.execute_in_transaction(callback)
+        except GenericSettingsError:
+            raise
         except Exception as e:
             logging.error(f"Failed to remove redirect: {e}")
             raise RedirectChangeError("Failed to remove redirect")
