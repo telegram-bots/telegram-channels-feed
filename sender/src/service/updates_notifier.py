@@ -51,7 +51,8 @@ class UpdatesNotifier:
                     message_id=int(json_data['message_id_']),
                     date=datetime.now(),
                     content=json_data['new_content_'],
-                    update=True
+                    update=False # Enable it later
+                    # update=True
                 )
 
         def get_channel_info(channel_tg_id):
