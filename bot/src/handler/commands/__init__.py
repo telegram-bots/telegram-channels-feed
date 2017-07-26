@@ -5,6 +5,8 @@ from .list import List
 from .start import Start
 from .subscribe import Subscribe
 from .unsubscribe import Unsubscribe
+from .add_redirect import AddRedirect
+from .remove_redirect import RemoveRedirect
 
 commands = {}
 for clazz in Base.__subclasses__():

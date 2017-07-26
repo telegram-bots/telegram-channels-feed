@@ -81,7 +81,7 @@ class UpdatesNotifier:
                 'parse_mode': post.mode,
                 'reply_markup': post.keyboard,
                 'disable_web_page_preview': not post.preview_enabled,
-                'chat_id': user.telegram_id
+                'chat_id': user.telegram_id if user.redirect_url is None else user.redirect_url
             }
 
             if post.file_id is not False:

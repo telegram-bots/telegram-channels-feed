@@ -21,6 +21,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     telegram_id = Column(BigInteger, nullable=False, unique=True)
+    redirect_url = Column(String, nullable=True)
 
 
 class Subscription(Base):

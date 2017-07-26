@@ -88,3 +88,4 @@ subscription_repository = SubscriptionRepository()
 
 from .service import *
 subscriptions = Subscriptions()
+settings = Settings()
