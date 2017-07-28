@@ -1,6 +1,6 @@
 Try this:
 ```
-/subscribe @channel\_name
+/subscribe @channel_name
 ```
 for example, `/subscribe @telegram`. This would add Telegram News to your feed.
 
