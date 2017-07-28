@@ -1,10 +1,15 @@
-# telegram-channels-feed
+# `telegram-channels-feed`
+
 :rocket: Telegram bot that makes one feed from given channels
 
-## Установка и запуск бота
-`docker-compose run bot python init.py`
+[Справка по боту](/bot/resources/info/help.md)
 
-`docker-compose up`
+## Установка и запуск бота
+
+```bash
+docker-compose run bot python init.py
+docker-compose up
+```
 
 ## [Юзкейс работы бота](http://telegra.ph/YUzkejs-raboty-bota-04-05)
 
