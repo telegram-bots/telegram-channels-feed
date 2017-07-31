@@ -17,7 +17,6 @@ class Post:
 class PostType:
     TEXT = 'text'
     PHOTO = 'photo'
-    VIDEO = 'video'
 
 
 class PostInfo:

@@ -1,5 +1,6 @@
 import html
 
+from telegram.constants import *
 from telegram.parsemode import ParseMode
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from typing import Optional
@@ -13,8 +14,8 @@ class PostFormatter:
     Formats a telegram message into text representation.
     """
     MAX_MESSAGE_LENGTH = {
-        PostType.PHOTO: 200,
-        PostType.TEXT: 4096
+        PostType.PHOTO: MAX_CAPTION_LENGTH,
+        PostType.TEXT: MAX_MESSAGE_LENGTH
     }
 
     def __init__(self, channel: Channel, post_info: PostInfo):
