@@ -1,0 +1,23 @@
+spring:
+  main:
+    web-environment: false
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: Europe/Moscow
+    date-format: yyyy-MM-dd'T'HH:mm:ssZ
+  rabbitmq:
+    virtual-host: /
+  cloud:
+    stream:
+      bindings:
+        input:
+          group: raw
+          destination: channels-feed
+          content-type: application/json
+        output:
+          producer:
+            required-groups:
+              - processed
+          destination: channels-feed
+          content-type: application/json

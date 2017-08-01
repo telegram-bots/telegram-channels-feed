@@ -1,0 +1,70 @@
+<configuration>
+    <springProperty scope="context"
+                    name="appender"
+                    source="logging.appender"
+                    defaultValue="stdout,roll_file"/>
+
+    <springProperty scope="context"
+                    name="maxHistory"
+                    source="logging.roll-file.max-history"
+                    defaultValue="10" />
+
+    <springProperty scope="context"
+                    name="maxFileSize"
+                    source="logging.roll-file.max-size"
+                    defaultValue="100MB" />
+
+    <springProperty scope="context"
+                    name="totalSize"
+                    source="logging.roll-file.total-size"
+                    defaultValue="1GB" />
+
+    <springProperty scope="context"
+                    name="root.level"
+                    source="logging.root.level"
+                    defaultValue="INFO"/>
+
+    <springProperty scope="context"
+                    name="name"
+                    source="spring.application.name"
+                    defaultValue="changeit"/>
+
+    <if condition='java.util.Arrays.asList(property("appender").split(",")).contains("stdout")'>
+        <then>
+            <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+                <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                    <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>
+                </encoder>
+            </appender>
+        </then>
+    </if>
+
+    <if condition='java.util.Arrays.asList(property("appender").split(",")).contains("roll_file")'>
+        <then>
+            <appender name="roll-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>log-${name}.txt</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                    <fileNamePattern>log-${name}-%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
+                    <maxHistory>${maxHistory}</maxHistory>
+                    <maxFileSize>${maxFileSize}</maxFileSize>
+                    <totalSizeCap>${totalSize}</totalSizeCap>
+                </rollingPolicy>
+
+                <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                    <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{0} - %msg%n</pattern>
+                </encoder>
+            </appender>
+        </then>
+    </if>
+
+    <logger name="org.springframework" level="WARN"/>
+
+    <root level="${root.level}">
+        <if condition='java.util.Arrays.asList(property("appender").split(",")).contains("roll_file")'>
+            <then><appender-ref ref="roll_file" /></then>
+        </if>
+        <if condition='java.util.Arrays.asList(property("appender").split(",")).contains("stdout")'>
+            <then><appender-ref ref="stdout" /></then>
+        </if>
+    </root>
+</configuration>
