@@ -21,3 +21,8 @@ spring:
               - processed
           destination: channels-feed
           content-type: application/json
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://127.0.0.1:5432/postgres
+    username:
+    password:
