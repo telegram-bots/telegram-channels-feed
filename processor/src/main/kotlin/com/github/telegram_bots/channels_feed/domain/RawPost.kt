@@ -2,6 +2,12 @@ package com.github.telegram_bots.channels_feed.domain
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.github.telegram_bots.channels_feed.domain.deserializer.EntityListDeserializer
+import com.github.telegram_bots.channels_feed.domain.deserializer.PhotoIDDeserializer
+import com.github.telegram_bots.channels_feed.domain.deserializer.TypeDeserializer
 import java.time.Instant
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -20,18 +26,79 @@ data class RawPost(
 
         val update: Boolean = false
 ) {
+    @JsonTypeInfo(
+            use=JsonTypeInfo.Id.NAME,
+            property="ID",
+            include = JsonTypeInfo.As.EXISTING_PROPERTY,
+            defaultImpl = OtherContent::class,
+            visible = true
+    )
+    @JsonSubTypes(
+            JsonSubTypes.Type(value = TextContent::class, name = "MessageText"),
+            JsonSubTypes.Type(value = PhotoContent::class, name = "MessagePhoto")
+    )
+    interface Content {
+        val type: String?
+        val text: String
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class TextContent(
+            @JsonProperty("ID")
+            override val type: String,
+
+            @JsonProperty("text_")
+            override val text: String,
+
+            @JsonProperty("entities_")
+            @JsonDeserialize(using = EntityListDeserializer::class)
+            val entities: List<Entity>
+    ) : Content {
         @JsonIgnoreProperties(ignoreUnknown = true)
-        data class Content(
-                @JsonProperty("text_")
-                private val _text: String?,
+        data class Entity(
+                @JsonProperty("ID")
+                @JsonDeserialize(using = TypeDeserializer::class)
+                val type: Type,
 
-                @JsonProperty("caption_")
-                private val _caption: String?,
+                @JsonProperty("offset_")
+                val offset: Int,
 
-                @JsonProperty("entities_")
-                val entities: List<Any>
+                @JsonProperty("length_")
+                val length: Int,
+
+                @JsonProperty("url_")
+                val url: String?
         ) {
-                val text: String
-                        get() = _text ?: _caption!!
+            enum class Type(val value: String) {
+                HREF("MessageEntityTextUrl"),
+                BOLD("MessageEntityBold"),
+                ITALIC("MessageEntityItalic"),
+                CODE("MessageEntityCode"),
+                PRE("MessageEntityPre"),
+                UNKNOWN("Unknown");
+            }
         }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class PhotoContent(
+            @JsonProperty("ID")
+            override val type: String,
+
+            @JsonProperty("caption_")
+            override val text: String = "",
+
+            @JsonProperty("photo_")
+            @JsonDeserialize(using = PhotoIDDeserializer::class)
+            val photoId: String
+    ) : Content
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class OtherContent(
+            @JsonProperty("ID")
+            override val type: String,
+
+            @JsonProperty("caption_")
+            override val text: String = ""
+    ) : Content
 }

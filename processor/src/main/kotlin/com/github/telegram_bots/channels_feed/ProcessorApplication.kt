@@ -11,13 +11,13 @@ import org.springframework.core.env.Environment
 class ProcessorApplication(private val env: Environment) : ApplicationRunner {
     private val log = KotlinLogging.logger {}
 
-    @Throws(Exception::class)
     override fun run(args: ApplicationArguments) {
         log.info { env }
     }
 
     companion object {
-        @JvmStatic fun main(args: Array<String>) {
+        @JvmStatic
+        fun main(args: Array<String>) {
             SpringApplication.run(ProcessorApplication::class.java, *args)
         }
     }

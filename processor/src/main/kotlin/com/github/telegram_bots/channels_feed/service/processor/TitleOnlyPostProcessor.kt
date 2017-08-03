@@ -8,7 +8,8 @@ class TitleOnlyPostProcessor : PostProcessor {
     override fun process(postInfo: PostInfo) = listOf(
             ProcessedPost(
                     text = """<b>new in</b> <a href="https://t.me/${postInfo.second.url}">${postInfo.second.name}</a>""",
-                    previewEnabled = false
+                    previewEnabled = false,
+                    mode = ProcessedPost.Mode.HTML
             )
     )
 

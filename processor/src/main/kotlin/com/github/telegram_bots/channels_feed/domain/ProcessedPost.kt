@@ -4,7 +4,7 @@ data class ProcessedPost(
         private val text: String,
         private val previewEnabled: Boolean,
         private val fileId: String? = null,
-        private val mode: Mode = ProcessedPost.Mode.HTML
+        private val mode: Mode
 ) {
     enum class Mode { HTML, MARKDOWN }
 }

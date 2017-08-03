@@ -26,3 +26,7 @@ spring:
     url: jdbc:postgresql://127.0.0.1:5432/postgres
     username:
     password:
+
+logging:
+  root:
+    level: TRACE

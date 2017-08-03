@@ -2,7 +2,7 @@
     <springProperty scope="context"
                     name="appender"
                     source="logging.appender"
-                    defaultValue="stdout,roll_file"/>
+                    defaultValue="stdout" />
 
     <springProperty scope="context"
                     name="maxHistory"
@@ -39,6 +39,17 @@
         </then>
     </if>
 
+    <if condition='java.util.Arrays.asList(property("appender").split(",")).contains("file")'>
+        <then>
+            <appender name="file" class="ch.qos.logback.core.FileAppender">
+                <file>log-${name}.txt</file>
+                <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                    <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{0} - %msg%n</pattern>
+                </encoder>
+            </appender>
+        </then>
+    </if>
+
     <if condition='java.util.Arrays.asList(property("appender").split(",")).contains("roll_file")'>
         <then>
             <appender name="roll-file" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -57,10 +68,11 @@
         </then>
     </if>
 
+    <logger name="com.github.telegram_bots" level="INFO"/>
+    <logger name="ch.qos.logback" level="WARN"/>
     <logger name="org.springframework" level="WARN"/>
-    <logger name="org.springframework.boot.devtools" level="WARN"/>
 
-    <root level="${root.level}">
+    <root level="${logging.root.level}">
         <if condition='java.util.Arrays.asList(property("appender").split(",")).contains("roll_file")'>
             <then><appender-ref ref="roll_file" /></then>
         </if>
