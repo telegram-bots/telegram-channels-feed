@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.github.telegram_bots.channels_feed.domain.deserializer.EntityListDeserializer
 import com.github.telegram_bots.channels_feed.domain.deserializer.PhotoIDDeserializer
 import com.github.telegram_bots.channels_feed.domain.deserializer.TypeDeserializer
+import com.github.telegram_bots.channels_feed.extension.UTF_16LE
+import com.github.telegram_bots.channels_feed.extension.toUTF16ByteArray
 import java.time.Instant
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -38,7 +40,7 @@ data class RawPost(
             JsonSubTypes.Type(value = PhotoContent::class, name = "MessagePhoto")
     )
     interface Content {
-        val type: String?
+        val type: String
         val text: String
     }
 
@@ -54,6 +56,8 @@ data class RawPost(
             @JsonDeserialize(using = EntityListDeserializer::class)
             val entities: List<Entity>
     ) : Content {
+        val utf16TextBytes: ByteArray by lazy { text.toUTF16ByteArray() }
+
         @JsonIgnoreProperties(ignoreUnknown = true)
         data class Entity(
                 @JsonProperty("ID")
@@ -70,7 +74,8 @@ data class RawPost(
                 val url: String?
         ) {
             enum class Type(val value: String) {
-                HREF("MessageEntityTextUrl"),
+                PLAIN_LINK("MessageEntityUrl"),
+                FORMATTED_LINK("MessageEntityTextUrl"),
                 BOLD("MessageEntityBold"),
                 ITALIC("MessageEntityItalic"),
                 CODE("MessageEntityCode"),
