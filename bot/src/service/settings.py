@@ -34,7 +34,7 @@ class Settings:
         def callback():
             user = user_repository.get(telegram_id=command.chat_id)
             if user is None or user.redirect_url is None:
-                raise RedirectChangeError("You don't have added redirect!")
+                raise RedirectChangeError("You haven't added a redirect!")
 
             user_repository.change_settings(id_=user.id, redirect_url=None)
 

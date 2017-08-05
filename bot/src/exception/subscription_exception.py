@@ -15,7 +15,7 @@ class SubscribeError(GenericSubscriptionError):
 
 class AlreadySubscribedError(SubscribeError):
     def __init__(self):
-        super(SubscribeError, self).__init__("You are already subscribed to this channel!")
+        super(SubscribeError, self).__init__("You have already subscribed to this channel!")
 
 
 class UnsubscribeError(GenericSubscriptionError):
