@@ -1,8 +1,8 @@
 package com.github.telegram_bots.channels_feed.service.processor
 
 import com.github.telegram_bots.channels_feed.domain.*
-import com.github.telegram_bots.channels_feed.domain.ProcessType.TITLE_ONLY
 import com.github.telegram_bots.channels_feed.domain.ProcessedPost.Mode.HTML
+import com.github.telegram_bots.channels_feed.service.processor.PostProcessor.ProcessType.TITLE_ONLY
 import org.springframework.stereotype.Component
 
 @Component

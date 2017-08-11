@@ -5,4 +5,6 @@ import com.github.telegram_bots.channels_feed.domain.*
 interface PostProcessor {
     fun process(postInfo: PostInfo): List<ProcessedPost>
     fun type(): ProcessType
+
+    enum class ProcessType { FULL, SHORT, TITLE_ONLY }
 }

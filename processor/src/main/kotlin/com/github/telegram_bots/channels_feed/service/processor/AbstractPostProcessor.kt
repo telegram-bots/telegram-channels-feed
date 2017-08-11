@@ -5,7 +5,7 @@ import com.github.telegram_bots.channels_feed.domain.RawPost.*
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent.Entity
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent.Entity.Type
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent.Entity.Type.*
-import com.github.telegram_bots.channels_feed.extension.asUTF16String
+import com.github.telegram_bots.channels_feed.extension.UTF_16LE
 
 abstract class AbstractPostProcessor : PostProcessor {
     protected abstract fun processText(info: PostInfo): String
@@ -21,7 +21,7 @@ abstract class AbstractPostProcessor : PostProcessor {
                 ?.let {
                     when (it.type) {
                         FORMATTED_LINK -> it.url
-                        PLAIN_LINK -> it.extractValue(content.utf16TextBytes).asUTF16String()
+                        PLAIN_LINK -> it.extractValue(content.utf16TextBytes).let { String(it, UTF_16LE) }
                         else -> null
                     }
                 }

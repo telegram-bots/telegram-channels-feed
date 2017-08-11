@@ -13,13 +13,13 @@ spring:
       bindings:
         input:
           group: raw
-          destination: channels-feed
+          destination: channels-feed.raw
           content-type: application/json
         output:
           producer:
             required-groups:
               - processed
-          destination: channels-feed
+          destination: channels-feed.processed
           content-type: application/json
   datasource:
     driver-class-name: org.postgresql.Driver

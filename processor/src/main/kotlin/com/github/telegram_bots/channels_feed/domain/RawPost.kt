@@ -9,7 +9,6 @@ import com.github.telegram_bots.channels_feed.domain.deserializer.EntityListDese
 import com.github.telegram_bots.channels_feed.domain.deserializer.PhotoIDDeserializer
 import com.github.telegram_bots.channels_feed.domain.deserializer.TypeDeserializer
 import com.github.telegram_bots.channels_feed.extension.UTF_16LE
-import com.github.telegram_bots.channels_feed.extension.toUTF16ByteArray
 import java.time.Instant
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -56,7 +55,7 @@ data class RawPost(
             @JsonDeserialize(using = EntityListDeserializer::class)
             val entities: List<Entity>
     ) : Content {
-        val utf16TextBytes: ByteArray by lazy { text.toUTF16ByteArray() }
+        val utf16TextBytes: ByteArray by lazy { text.toByteArray(UTF_16LE) }
 
         @JsonIgnoreProperties(ignoreUnknown = true)
         data class Entity(
