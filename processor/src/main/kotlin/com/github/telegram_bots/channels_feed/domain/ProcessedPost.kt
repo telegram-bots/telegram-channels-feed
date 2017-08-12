@@ -1,9 +1,9 @@
 package com.github.telegram_bots.channels_feed.domain
 
 data class ProcessedPost(
-        val text: String,
+        val text: String? = null,
+        val fileId: CachedFileID? = null,
         val previewEnabled: Boolean,
-        val fileId: String? = null,
         val mode: Mode
 ) {
     enum class Mode { HTML, MARKDOWN }

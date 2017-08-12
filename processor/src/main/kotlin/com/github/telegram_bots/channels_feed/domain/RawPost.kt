@@ -94,7 +94,7 @@ data class RawPost(
 
             @JsonProperty("photo_")
             @JsonDeserialize(using = PhotoIDDeserializer::class)
-            val photoId: String
+            val photoId: FileID
     ) : Content
 
     @JsonIgnoreProperties(ignoreUnknown = true)

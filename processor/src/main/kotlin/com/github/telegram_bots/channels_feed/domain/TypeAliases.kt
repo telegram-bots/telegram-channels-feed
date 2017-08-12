@@ -4,3 +4,7 @@ import com.github.telegram_bots.channels_feed.service.processor.PostProcessor.Pr
 
 typealias ProcessedPostGroup = Map<ProcessType, List<ProcessedPost>>
 typealias PostInfo = Pair<RawPost, Channel>
+typealias Header = String
+typealias Link = String?
+typealias FileID = String
+typealias CachedFileID = String

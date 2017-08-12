@@ -1,5 +1,6 @@
 package com.github.telegram_bots.channels_feed.service.processor
 
+import com.github.telegram_bots.channels_feed.domain.Link
 import com.github.telegram_bots.channels_feed.domain.PostInfo
 import com.github.telegram_bots.channels_feed.domain.RawPost.*
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent.Entity
@@ -8,9 +9,11 @@ import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent.Entity.
 import com.github.telegram_bots.channels_feed.extension.UTF_16LE
 
 abstract class AbstractPostProcessor : PostProcessor {
-    protected abstract fun processText(info: PostInfo): String
+    protected val MAX_MESSAGE_LENGTH: Int = 4096
+    protected val MAX_CAPTION_LENGTH: Int = 200
+    protected val SEPARATOR: String = "\n\n"
 
-    protected fun extractFirstLink(info: PostInfo): String? {
+    protected fun extractFirstLink(info: PostInfo): Link {
         fun Type.isLink() = this == PLAIN_LINK || this == FORMATTED_LINK
 
         val content = info.first.content as? TextContent ?: return null

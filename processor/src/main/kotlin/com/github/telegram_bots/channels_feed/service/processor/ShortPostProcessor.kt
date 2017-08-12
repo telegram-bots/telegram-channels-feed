@@ -7,33 +7,28 @@ import com.github.telegram_bots.channels_feed.service.processor.PostProcessor.Pr
 import org.springframework.stereotype.Component
 
 @Component
-class ShortPostProcessor(private val textLimit: Int = 200) : AbstractPostProcessor() {
+class ShortPostProcessor : AbstractPostProcessor() {
     override fun process(postInfo: PostInfo): List<ProcessedPost> {
         val fileId = extractFileId(postInfo)
-        val firstLink = extractFirstLink(postInfo, fileId != null)
-        val text = (firstLink ?: "") + processText(postInfo)
+        val firstLink = extractFirstLink(postInfo, hasFile = fileId != null)
+        val header = makeHeader(postInfo)
+        val text = processText(firstLink, header, postInfo)
 
-        return listOf(
-                ProcessedPost(
-                        text = text,
-                        previewEnabled = firstLink != null,
-                        fileId = fileId,
-                        mode = HTML
-                )
-        )
+        return listOf(ProcessedPost(text, fileId, previewEnabled = firstLink != null, mode = HTML))
     }
-
-    override fun processText(info: PostInfo) = (makeHeader(info) + "\n\n" + info.first.content.text.replaceHTMLTags())
-            .shorten(textLimit)
 
     override fun type() = SHORT
 
-    private fun makeHeader(info: PostInfo) = when (info.first.content) {
-        is TextContent -> """<a href="https://t.me/${info.second.url}">${info.second.name}</a>:"""
-        else -> """via ${info.second.name}(@${info.second.url})"""
+    private fun processText(link: Link, header: Header, info: PostInfo): String {
+        return ((link ?: "") + header + info.first.content.text.replaceHTMLTags()).shorten(MAX_CAPTION_LENGTH)
     }
 
-    private fun extractFirstLink(info: PostInfo, hasFile: Boolean) = if (!hasFile) extractFirstLink(info) else null
+    private fun makeHeader(info: PostInfo) = when (info.first.content) {
+        is TextContent -> """<a href="https://t.me/${info.second.url}">${info.second.name}</a>:$SEPARATOR"""
+        else -> """via ${info.second.name}(@${info.second.url})$SEPARATOR"""
+    }
+
+    private fun extractFirstLink(info: PostInfo, hasFile: Boolean) = if (hasFile) null else extractFirstLink(info)
 
     private fun String.shorten(limit: Int, placeholder: String = "...") =
             if (length <= limit) this
