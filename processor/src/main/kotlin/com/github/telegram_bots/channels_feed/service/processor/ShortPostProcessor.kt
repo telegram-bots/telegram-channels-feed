@@ -20,7 +20,7 @@ class ShortPostProcessor : AbstractPostProcessor() {
     override fun type() = SHORT
 
     private fun processText(link: Link, header: Header, info: PostInfo): String {
-        return ((link ?: "") + header + info.first.content.text.replaceHTMLTags()).shorten(MAX_CAPTION_LENGTH)
+        return ((link ?: "") + header + processText(info)).shorten(MAX_CAPTION_LENGTH)
     }
 
     private fun makeHeader(info: PostInfo) = when (info.first.content) {

@@ -20,6 +20,7 @@ class EntityListDeserializer : JsonDeserializer<List<Entity>>() {
         return node.fieldNames()
                 .asSequence()
                 .map { mapper.readValue(node.get(it).toString(), Entity::class.java) }
+                .sortedBy { it.offset }
                 .toList()
     }
 }

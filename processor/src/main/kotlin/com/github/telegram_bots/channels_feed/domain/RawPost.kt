@@ -55,8 +55,6 @@ data class RawPost(
             @JsonDeserialize(using = EntityListDeserializer::class)
             val entities: List<Entity>
     ) : Content {
-        val utf16TextBytes: ByteArray by lazy { text.toByteArray(UTF_16LE) }
-
         @JsonIgnoreProperties(ignoreUnknown = true)
         data class Entity(
                 @JsonProperty("ID")

@@ -6,5 +6,5 @@ data class ProcessedPost(
         val previewEnabled: Boolean,
         val mode: Mode
 ) {
-    enum class Mode { HTML, MARKDOWN }
+    enum class Mode { HTML, MARKDOWN, TEXT }
 }
