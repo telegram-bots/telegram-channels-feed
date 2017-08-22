@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.github.telegram_bots.channels_feed.domain.deserializer.EntityListDeserializer
 import com.github.telegram_bots.channels_feed.domain.deserializer.PhotoIDDeserializer
 import com.github.telegram_bots.channels_feed.domain.deserializer.TypeDeserializer
-import com.github.telegram_bots.channels_feed.extension.UTF_16LE
 import java.time.Instant
 
 @JsonIgnoreProperties(ignoreUnknown = true)

@@ -1,4 +1,4 @@
-package com.github.telegram_bots.channels_feed.extension
+package com.github.telegram_bots.channels_feed.util
 
 import java.nio.charset.Charset
 

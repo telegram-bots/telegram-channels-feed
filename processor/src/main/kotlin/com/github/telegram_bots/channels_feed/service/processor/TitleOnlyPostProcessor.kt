@@ -6,12 +6,10 @@ import com.github.telegram_bots.channels_feed.service.processor.PostProcessor.Pr
 import org.springframework.stereotype.Component
 
 @Component
-class TitleOnlyPostProcessor : AbstractPostProcessor() {
-    override fun process(postInfo: PostInfo) = listOf(
-            ProcessedPost(makeTitle(postInfo), previewEnabled = false, mode = HTML)
-    )
+class TitleOnlyPostProcessor : AbstractPostProcessor(TITLE_ONLY) {
+    override fun process(postInfo: PostInfo) =
+        listOf(ProcessedPost(makeHeader(postInfo), previewEnabled = false, mode = HTML))
 
-    override fun type() = TITLE_ONLY
-
-    fun makeTitle(info: PostInfo) = """<b>new in</b> <a href="https://t.me/${info.second.url}">${info.second.name}</a>"""
+    private fun makeHeader(info: PostInfo) =
+        """<b>new in</b> <a href="https://t.me/${info.channel.url}">${info.channel.name}</a>"""
 }

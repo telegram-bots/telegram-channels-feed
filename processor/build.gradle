@@ -1,6 +1,7 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.1.4"
-    id "org.jetbrains.kotlin.plugin.spring" version "1.1.4"
+    id "org.jetbrains.kotlin.jvm" version "1.1.4-2"
+    id "org.jetbrains.kotlin.plugin.spring" version "1.1.4-2"
+    id "org.jetbrains.kotlin.plugin.noarg" version "1.1.4-2"
     id "org.springframework.boot" version "1.5.6.RELEASE"
 }
 
@@ -10,6 +11,11 @@ version "0.0.1"
 repositories {
     mavenLocal()
     mavenCentral()
+    jcenter()
+}
+
+noArg {
+    annotation("org.springframework.boot.context.properties.ConfigurationProperties")
 }
 
 dependencyManagement {
@@ -19,23 +25,37 @@ dependencyManagement {
 }
 
 dependencies {
-    compile("org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.4")
+    compile("org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.4-2")
+
+    // Rabbit
     compile("org.springframework.cloud:spring-cloud-starter-stream-rabbit") {
         exclude module: "spring-boot-starter-web"
     }
 
+    // Jackson
     compile("com.fasterxml.jackson.module:jackson-module-kotlin:2.8.9")
     compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.9")
 
-    compile("io.reactivex.rxjava2:rxjava:2.1.2")
+    // Rx
     compile("io.reactivex.rxjava2:rxkotlin:2.1.0")
 
+    // Postgres
     compile("org.springframework.boot:spring-boot-starter-jdbc")
     compile("org.postgresql:postgresql:42.1.3")
 
+    // Logger
     compile("io.github.microutils:kotlin-logging:1.4.6")
 
+    // HTTP Client
+    compile("com.github.kittinunf.fuel:fuel:1.9.0")
+    compile("com.github.kittinunf.fuel:fuel-rxjava:1.9.0")
+
+    // Cache
+    compile("org.springframework.boot:spring-boot-starter-cache")
+
     runtime("org.springframework.boot:spring-boot-devtools")
+
+    compileOnly("org.springframework.boot:spring-boot-configuration-processor")
 
     testCompile("org.springframework.boot:spring-boot-starter-test")
 }

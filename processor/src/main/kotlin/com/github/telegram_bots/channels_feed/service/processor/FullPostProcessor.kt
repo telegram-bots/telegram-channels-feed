@@ -7,9 +7,9 @@ import com.github.telegram_bots.channels_feed.service.processor.PostProcessor.Pr
 import org.springframework.stereotype.Component
 
 @Component
-class FullPostProcessor : AbstractPostProcessor() {
+class FullPostProcessor : AbstractPostProcessor(FULL) {
     override fun process(postInfo: PostInfo): List<ProcessedPost> {
-        val fileId = extractFileId(postInfo)
+        val fileId = postInfo.fileID
         val firstLink = extractFirstLink(postInfo)
         val header = makeHeader(postInfo)
         val text = processText(postInfo)
@@ -20,26 +20,23 @@ class FullPostProcessor : AbstractPostProcessor() {
         }
     }
 
-    override fun type() = FULL
-
     private fun splitToMediaPost(fileId: CachedFileID, link: Link, header: Header, text: String) = listOf(
             ProcessedPost(fileId = fileId, previewEnabled = false, mode = TEXT),
             ProcessedPost((link ?: "") + header + text, previewEnabled = link != null, mode = HTML)
     )
 
     private fun splitToTextPost(link: Link, header: Header, text: String): List<ProcessedPost> {
-        val totalLength = sequenceOf(link ?: "", header, text).map(String::length).sum()
+        val linkText = link ?: ""
+        val totalLength = sequenceOf(linkText, header, text).map(String::length).sum()
         val previewEnabled = link != null
 
         if (totalLength <= MAX_MESSAGE_LENGTH) {
-            return listOf(ProcessedPost(
-                    (link ?: "") + header + text, previewEnabled = previewEnabled, mode = HTML
-            ))
+            return listOf(ProcessedPost(linkText + header + text, previewEnabled = previewEnabled, mode = HTML))
         }
 
         return listOf(
                 ProcessedPost(
-                        (link ?: "") + header + text.substring(0..MAX_MESSAGE_LENGTH - 3) + "...",
+                        linkText + header + text.substring(0..MAX_MESSAGE_LENGTH - 3) + "...",
                         previewEnabled = previewEnabled,
                         mode = HTML
                 ),
@@ -51,7 +48,6 @@ class FullPostProcessor : AbstractPostProcessor() {
         )
     }
 
-    private fun makeHeader(info: PostInfo): Header {
-        return """<a href="https://t.me/${info.second.url}">${info.second.name}</a>:$SEPARATOR"""
-    }
+    private fun makeHeader(info: PostInfo) =
+        """<a href="https://t.me/${info.channel.url}">${info.channel.name}</a>:$SEPARATOR"""
 }

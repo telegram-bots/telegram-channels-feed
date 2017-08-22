@@ -7,9 +7,9 @@ import com.github.telegram_bots.channels_feed.service.processor.PostProcessor.Pr
 import org.springframework.stereotype.Component
 
 @Component
-class ShortPostProcessor : AbstractPostProcessor() {
+class ShortPostProcessor : AbstractPostProcessor(SHORT) {
     override fun process(postInfo: PostInfo): List<ProcessedPost> {
-        val fileId = extractFileId(postInfo)
+        val fileId = postInfo.fileID
         val firstLink = extractFirstLink(postInfo, hasFile = fileId != null)
         val header = makeHeader(postInfo)
         val text = processText(firstLink, header, postInfo)
@@ -17,15 +17,12 @@ class ShortPostProcessor : AbstractPostProcessor() {
         return listOf(ProcessedPost(text, fileId, previewEnabled = firstLink != null, mode = HTML))
     }
 
-    override fun type() = SHORT
+    private fun processText(link: Link, header: Header, info: PostInfo) =
+            ((link ?: "") + header + processText(info)).shorten(MAX_CAPTION_LENGTH)
 
-    private fun processText(link: Link, header: Header, info: PostInfo): String {
-        return ((link ?: "") + header + processText(info)).shorten(MAX_CAPTION_LENGTH)
-    }
-
-    private fun makeHeader(info: PostInfo) = when (info.first.content) {
-        is TextContent -> """<a href="https://t.me/${info.second.url}">${info.second.name}</a>:$SEPARATOR"""
-        else -> """via ${info.second.name}(@${info.second.url})$SEPARATOR"""
+    private fun makeHeader(info: PostInfo) = when (info.raw.content) {
+        is TextContent -> """<a href="https://t.me/${info.channel.url}">${info.channel.name}</a>:$SEPARATOR"""
+        else -> """via ${info.channel.name}(@${info.channel.url})$SEPARATOR"""
     }
 
     private fun extractFirstLink(info: PostInfo, hasFile: Boolean) = if (hasFile) null else extractFirstLink(info)

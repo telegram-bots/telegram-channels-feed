@@ -1,9 +1,9 @@
 package com.github.telegram_bots.channels_feed.service
 
-import com.github.telegram_bots.channels_feed.domain.Channel
 import com.github.telegram_bots.channels_feed.domain.PostInfo
 import com.github.telegram_bots.channels_feed.domain.ProcessedPostGroup
 import com.github.telegram_bots.channels_feed.domain.RawPost
+import com.github.telegram_bots.channels_feed.domain.RawPost.PhotoContent
 import com.github.telegram_bots.channels_feed.service.processor.PostProcessor
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
@@ -20,6 +20,7 @@ import javax.annotation.PreDestroy
 class PostProcessorService(
         private val processor: Processor,
         private val channelRepository: ChannelRepository,
+        private val cachingService: TelegramCachingService,
         private val postProcessors: Collection<PostProcessor>
 ) {
     private val log = KotlinLogging.logger {}
@@ -41,7 +42,15 @@ class PostProcessorService(
                 .subscribe(this::send, this::onError)
     }
 
-    private fun postInfo(raw: RawPost) = raw to (channelRepository.find(raw.channelId) ?: Channel.empty(raw.channelId))
+    private fun postInfo(raw: RawPost): PostInfo {
+        val channel = channelRepository.find(raw.channelId)
+        val fileId = when (raw.content) {
+            is PhotoContent -> cachingService.compute(raw.content.photoId)
+            else -> null
+        }
+
+        return PostInfo(raw, channel, fileId)
+    }
 
     private fun processPostData(info: PostInfo) = postProcessors
             .map { p -> p.type() to p.process(info) }

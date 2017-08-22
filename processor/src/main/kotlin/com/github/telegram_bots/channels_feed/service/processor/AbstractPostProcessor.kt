@@ -2,23 +2,25 @@ package com.github.telegram_bots.channels_feed.service.processor
 
 import com.github.telegram_bots.channels_feed.domain.Link
 import com.github.telegram_bots.channels_feed.domain.PostInfo
-import com.github.telegram_bots.channels_feed.domain.RawPost.PhotoContent
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent.Entity
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent.Entity.Type
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent.Entity.Type.*
-import com.github.telegram_bots.channels_feed.extension.UTF_16LE
+import com.github.telegram_bots.channels_feed.service.processor.PostProcessor.ProcessType
+import com.github.telegram_bots.channels_feed.util.UTF_16LE
 import java.io.ByteArrayOutputStream
 
-abstract class AbstractPostProcessor : PostProcessor {
-    protected val MAX_MESSAGE_LENGTH: Int = 4096
-    protected val MAX_CAPTION_LENGTH: Int = 200
-    protected val SEPARATOR: String = "\n\n"
+abstract class AbstractPostProcessor(override val type: ProcessType) : PostProcessor {
+    companion object {
+        const val MAX_MESSAGE_LENGTH: Int = 4096
+        const val MAX_CAPTION_LENGTH: Int = 200
+        const val SEPARATOR: String = "\n\n"
+    }
 
     protected fun extractFirstLink(info: PostInfo): Link {
         fun Type.isLink() = this == PLAIN_LINK || this == FORMATTED_LINK
 
-        val content = info.first.content as? TextContent ?: return null
+        val content = info.raw.content as? TextContent ?: return null
         return content
                 .entities
                 .find { it.type.isLink() }
@@ -32,16 +34,8 @@ abstract class AbstractPostProcessor : PostProcessor {
                 ?.let { """<a href="$it">\xad</a>""" }
     }
 
-    protected fun extractFileId(info: PostInfo): String? {
-        val content = info.first.content
-        return when (content) {
-            is PhotoContent -> content.photoId
-            else -> null
-        }
-    }
-
     protected fun processText(info: PostInfo): String {
-        val content = info.first.content
+        val content = info.raw.content
         return content.text
                 .let {
                     if (content is TextContent)
@@ -67,7 +61,8 @@ abstract class AbstractPostProcessor : PostProcessor {
 
                     target
                 }
-                .let { it.toByteArray().let { String(it, UTF_16LE) } }
+                .toByteArray()
+                .let { String(it, UTF_16LE) }
     }
 
     private fun String.replaceHTMLTags() = replace("<", "&lt;")

@@ -6,8 +6,6 @@ spring:
       write-dates-as-timestamps: false
     time-zone: Europe/Moscow
     date-format: yyyy-MM-dd'T'HH:mm:ssZ
-  rabbitmq:
-    virtual-host: /
   cloud:
     stream:
       bindings:
@@ -21,12 +19,11 @@ spring:
               - processed
           destination: channels-feed.processed
           content-type: application/json
-  datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://127.0.0.1:5432/postgres
-    username:
-    password:
+
+processor:
+  bot-token: ${CF_BOT_TOKEN}
+  tg-cli-url: ${CF_TGCLI_URL}
 
 logging:
   root:
-    level: TRACE
+    level: INFO
