@@ -1,6 +1,9 @@
 package com.github.telegram_bots.channels_feed.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.github.telegram_bots.channels_feed.domain.RawPost
+import com.github.telegram_bots.channels_feed.util.RawPostDeserializer
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties
 import org.springframework.context.annotation.Bean
@@ -14,7 +17,9 @@ import javax.sql.DataSource
 @Configuration
 class ProcessorConfig {
     @Bean
-    fun objectMapper() = ObjectMapper().findAndRegisterModules()!!
+    fun objectMapper() = ObjectMapper()
+            .findAndRegisterModules()
+            .registerModule(SimpleModule().apply { addDeserializer(RawPost::class.java, RawPostDeserializer) })
 
     @Bean
     fun jdbcTemplate(ds: DataSource) = JdbcTemplate(ds)

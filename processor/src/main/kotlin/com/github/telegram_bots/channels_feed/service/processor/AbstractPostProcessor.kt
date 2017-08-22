@@ -27,7 +27,7 @@ abstract class AbstractPostProcessor(override val type: ProcessType) : PostProce
                 ?.let {
                     when (it.type) {
                         FORMATTED_LINK -> it.url
-                        PLAIN_LINK -> it.extract(content.text.toByteArray(UTF_16LE))
+                        PLAIN_LINK -> it.value
                         else -> null
                     }
                 }
@@ -47,7 +47,7 @@ abstract class AbstractPostProcessor(override val type: ProcessType) : PostProce
     private fun String.convertEntities(entities: List<Entity>): String {
         val source = toByteArray(UTF_16LE)
         return entities.asSequence()
-                .map { Triple(it.format(source), it.startPos(), it.endPos()) }
+                .map { Triple(it.format(), it.startPos, it.endPos) }
                 .fold(Triple(0, source, ByteArrayOutputStream()), {
                     (curPos, source, target), (replacement, startPos, endPos) ->
                             target.write(source.sliceArray(curPos until startPos))
@@ -69,9 +69,8 @@ abstract class AbstractPostProcessor(override val type: ProcessType) : PostProce
             .replace(">", "&gt;")
             .replace("&", "&amp;")
 
-    private fun Entity.format(bytes: ByteArray): ByteArray {
-        val value = extract(bytes)
-        val formatted = when (type) {
+    private fun Entity.format(): ByteArray {
+        val result = when (type) {
             FORMATTED_LINK -> """<a href="$url">$value</a>"""
             BOLD -> """<b>$value</b>"""
             ITALIC -> """<i>$value</i>"""
@@ -80,13 +79,6 @@ abstract class AbstractPostProcessor(override val type: ProcessType) : PostProce
             else -> value
         }
 
-        return formatted.toByteArray(UTF_16LE)
+        return result.toByteArray(UTF_16LE)
     }
-
-    private fun Entity.extract(bytes: ByteArray) = bytes.sliceArray(startPos() until endPos())
-            .let { String(it, UTF_16LE) }
-
-    private fun Entity.startPos() = offset * 2
-
-    private fun Entity.endPos() = (length + offset) * 2
 }

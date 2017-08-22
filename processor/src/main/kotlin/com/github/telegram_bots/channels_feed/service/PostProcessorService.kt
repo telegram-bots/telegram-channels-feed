@@ -53,7 +53,7 @@ class PostProcessorService(
     }
 
     private fun processPostData(info: PostInfo) = postProcessors
-            .map { p -> p.type() to p.process(info) }
+            .map { p -> p.type to p.process(info) }
             .toMap()
 
     private fun send(postGroup: ProcessedPostGroup) {
