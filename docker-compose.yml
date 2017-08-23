@@ -32,6 +32,8 @@ services:
     environment:
       - JAVA_OPTS=-Xmx256M -Xms256M
     mem_limit: 512mb
+    volumes:
+      - ./storage/processor:/tmp
     depends_on:
       db:
         condition: service_healthy

@@ -1,31 +1,27 @@
-from datetime import datetime
-
-
 class Post:
-    def __init__(self, text, mode=None, type=None, keyboard=None, preview_enabled=False, file_id=None):
-        self.text = text
-        self.mode = mode
-        self.type = type
-        self.keyboard = keyboard
-        self.preview_enabled = preview_enabled
-        self.file_id = file_id
+    def __init__(self, dictionary):
+        self.text = dictionary['text']
+        self.file_id = dictionary['fileId']
+        self.preview_enabled = dictionary['previewEnabled']
+        self.mode = self.get_parse_mode(dictionary['mode'])
+
+    def get_parse_mode(self, mode):
+        if mode == 'HTML':
+            return 'HTML'
+        elif mode == 'MARKDOWN':
+            return 'Markdown'
+        else:
+            return None
 
     def __str__(self):
         return str(self.__dict__)
 
 
-class PostType:
-    TEXT = 'text'
-    PHOTO = 'photo'
-
-
-class PostInfo:
-    def __init__(self, channel_telegram_id: int, message_id: int, date: datetime, content, update: bool):
-        self.channel_telegram_id = channel_telegram_id
-        self.message_id = message_id
-        self.date = date
-        self.content = content
-        self.update = update
+class PostGroup:
+    def __init__(self, dictionary):
+        self.channel_id = dictionary['channelId']
+        self.message_id = dictionary['messageId']
+        self.posts = {type: [Post(post) for post in posts] for type, posts in dictionary['posts'].items()}
 
     def __str__(self):
         return str(self.__dict__)

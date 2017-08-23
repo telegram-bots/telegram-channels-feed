@@ -41,10 +41,10 @@ object RawPostDeserializer : JsonDeserializer<RawPost>() {
             }
             PHOTO -> PhotoContent(
                     type = type,
-                    text = node.path("caption_").textValue(),
+                    text = node.path("caption_").asText().replace("false", ""),
                     photoId = deserializePhotoID(node.get("photo_"))
             )
-            else -> OtherContent(type, node.path("caption_").textValue())
+            else -> OtherContent(type, node.path("caption_").asText().replace("false", ""))
         }
     }
 

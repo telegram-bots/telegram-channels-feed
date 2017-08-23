@@ -52,9 +52,13 @@ class PostProcessorService(
         return PostInfo(raw, channel, fileId)
     }
 
-    private fun processPostData(info: PostInfo) = postProcessors
-            .map { p -> p.type to p.process(info) }
-            .toMap()
+    private fun processPostData(info: PostInfo): ProcessedPostGroup {
+        val posts = postProcessors
+                .map { p -> p.type to p.process(info) }
+                .toMap()
+
+        return ProcessedPostGroup(info.raw.channelId, info.raw.messageId, posts)
+    }
 
     private fun send(postGroup: ProcessedPostGroup) {
         processor.output().send(MessageBuilder.withPayload(postGroup).build())

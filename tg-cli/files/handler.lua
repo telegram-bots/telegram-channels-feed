@@ -10,14 +10,14 @@ local channel
 local connection = {
     role = "publisher",
     routing_key = ROUTING_KEY,
-    exchange = "channels_feed",
-    queue = "channels_feed.single",
+    exchange = "channels_feed.raw",
+    queue = "channels_feed.raw.raw",
     user = rabbit_url.user,
     password = rabbit_url.password,
     virtual_host = rabbit_url.path
 }
 local exchange = {
-    typ = "direct",
+    typ = "topic",
     durable = true
 }
 local queue = {
@@ -96,15 +96,6 @@ function send_to_exchange(msg)
     print("Successfully sent to exchange")
 end
 
--- View message and mark as read
-function mark_as_read(chat_id, msg_id)
-    tdcli_function ({
-        ID = "ViewMessages",
-        chat_id_ = chat_id,
-        message_ids_ = {msg_id}
-    }, db_cb, nil)
-end
-
 -- Reply to user
 function reply(chat_id, msg_id, text)
     tdcli_function ({
@@ -135,13 +126,12 @@ function tdcli_update_callback(data)
 
         if (msg.is_post_ == true) then
             send_to_exchange(cjson.encode(msg))
-            mark_as_read(msg.chat_id_, msg.id_)
         elseif msg.content_.ID == "MessageText" then
             if msg.content_.text_:lower() == "ping" then
                 reply(msg.chat_id_, msg.id_, "pong")
             end
         end
-    elseif (data.ID == "UpdateMessageContent") then
-        send_to_exchange(cjson.encode(data))
+--    elseif (data.ID == "UpdateMessageContent") then
+--        send_to_exchange(cjson.encode(data))
     end
 end

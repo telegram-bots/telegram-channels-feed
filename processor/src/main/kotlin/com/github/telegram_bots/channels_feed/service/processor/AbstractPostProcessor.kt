@@ -31,7 +31,7 @@ abstract class AbstractPostProcessor(override val type: ProcessType) : PostProce
                         else -> null
                     }
                 }
-                ?.let { """<a href="$it">\xad</a>""" }
+                ?.let { "<a href=\"$it\">\u00AD</a>" }
     }
 
     protected fun processText(info: PostInfo): String {
