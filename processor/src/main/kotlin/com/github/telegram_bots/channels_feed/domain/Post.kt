@@ -1,11 +1,27 @@
 package com.github.telegram_bots.channels_feed.domain
 
-import java.time.Instant
+import com.github.telegram_bots.channels_feed.domain.RawPost.Content.Type
+
+data class ProcessedPost(
+        val text: String? = null,
+        val fileId: CachedFileID? = null,
+        val previewEnabled: Boolean,
+        val mode: Mode
+) {
+    enum class Mode { TEXT, HTML, MARKDOWN }
+}
+
+data class ProcessedPostGroup(
+        val channelId: Long,
+        val messageId: Long,
+        val posts: Map<Type, List<ProcessedPost>>
+) {
+    enum class Type { FULL, SHORT, TITLE_ONLY }
+}
 
 data class RawPost(
         val channelId: Long,
         val messageId: Long,
-        val date: Instant,
         val content: Content,
         val update: Boolean = false
 ) {
@@ -20,7 +36,7 @@ data class RawPost(
         }
     }
 
-    data class TextContent(override val type: Content.Type, override val text: String, val entities: List<Entity>) : Content {
+    data class TextContent(override val type: Type, override val text: String, val entities: List<Entity>) : Content {
         data class Entity(val type: Type, val value: String, val startPos: Int, val endPos: Int, val url: String?) {
             enum class Type(val value: String) {
                 PLAIN_LINK("MessageEntityUrl"),
@@ -34,7 +50,9 @@ data class RawPost(
         }
     }
 
-    data class PhotoContent(override val type: Content.Type, override val text: String, val photoId: FileID) : Content
+    data class PhotoContent(override val type: Type, override val text: String, val photoId: FileID) : Content
 
-    data class OtherContent(override val type: Content.Type, override val text: String) : Content
+    data class OtherContent(override val type: Type, override val text: String) : Content
 }
+
+data class RawPostData(val raw: RawPost, val channel: Channel, val fileID: CachedFileID?)

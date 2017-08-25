@@ -15,6 +15,7 @@ import com.github.telegram_bots.channels_feed.domain.FileID
 import com.github.telegram_bots.channels_feed.domain.URL
 import com.github.telegram_bots.channels_feed.util.RetryWithDelay
 import io.reactivex.Single
+import mu.KLogging
 import mu.KotlinLogging
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
@@ -24,8 +25,9 @@ import java.util.concurrent.TimeUnit.SECONDS
 
 @Service
 class TelegramCachingService(private val props: ProcessorProperties, private val jsonMapper: ObjectMapper) {
-    private val log = KotlinLogging.logger {}
     private val params by lazy { listOf("chat_id" to props.tgCliID) }
+
+    companion object: KLogging()
 
     @Cacheable("telegram")
     fun compute(fileId: FileID): CachedFileID {
@@ -52,7 +54,7 @@ class TelegramCachingService(private val props: ProcessorProperties, private val
                         .textValue()
                         .singleOrError()
                 }
-                .doOnSuccess { log.debug { "Resolved file_path: $it" } }
+                .doOnSuccess { logger.debug { "Resolved file_path: $it" } }
                 .cache()
     }
 
@@ -64,7 +66,7 @@ class TelegramCachingService(private val props: ProcessorProperties, private val
                 .flatMap { it.foldResult() }
                 .map { content -> Files.createTempFile("temp", ".tmp") to content }
                 .map { (path, content) -> Files.write(path, content) }
-                .doOnSuccess { log.debug { "Downloaded to: $it" } }
+                .doOnSuccess { logger.debug { "Downloaded to: $it" } }
                 .cache()
     }
 
@@ -86,10 +88,10 @@ class TelegramCachingService(private val props: ProcessorProperties, private val
                         .singleOrError()
                 }
                 .flatMap { it.path("file_id").textValue().singleOrError() }
-                .doOnSuccess { log.debug { "Uploaded as: $it" } }
+                .doOnSuccess { logger.debug { "Uploaded as: $it" } }
                 .doAfterSuccess {
                     try { Files.deleteIfExists(path) }
-                    catch (e: Exception) { log.warn { "Failed to delete temp-file" }}
+                    catch (e: Exception) { logger.warn { "Failed to delete temp-file" }}
                 }
     }
 

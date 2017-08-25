@@ -1,23 +1,23 @@
 package com.github.telegram_bots.channels_feed.service.processor
 
 import com.github.telegram_bots.channels_feed.domain.Link
-import com.github.telegram_bots.channels_feed.domain.PostInfo
+import com.github.telegram_bots.channels_feed.domain.RawPostData
+import com.github.telegram_bots.channels_feed.domain.ProcessedPostGroup
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent.Entity
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent.Entity.Type
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent.Entity.Type.*
-import com.github.telegram_bots.channels_feed.service.processor.PostProcessor.ProcessType
 import com.github.telegram_bots.channels_feed.util.UTF_16LE
 import java.io.ByteArrayOutputStream
 
-abstract class AbstractPostProcessor(override val type: ProcessType) : PostProcessor {
+abstract class AbstractPostProcessor(override val type: ProcessedPostGroup.Type) : PostProcessor {
     companion object {
         const val MAX_MESSAGE_LENGTH: Int = 4096
         const val MAX_CAPTION_LENGTH: Int = 200
         const val SEPARATOR: String = "\n\n"
     }
 
-    protected fun extractFirstLink(info: PostInfo): Link {
+    protected fun extractFirstLink(info: RawPostData): Link {
         fun Type.isLink() = this == PLAIN_LINK || this == FORMATTED_LINK
 
         val content = info.raw.content as? TextContent ?: return null
@@ -34,7 +34,7 @@ abstract class AbstractPostProcessor(override val type: ProcessType) : PostProce
                 ?.let { "<a href=\"$it\">\u00AD</a>" }
     }
 
-    protected fun processText(info: PostInfo): String {
+    protected fun processText(info: RawPostData): String {
         val content = info.raw.content
         return content.text
                 .let {

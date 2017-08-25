@@ -11,7 +11,6 @@ import com.github.telegram_bots.channels_feed.domain.RawPost.*
 import com.github.telegram_bots.channels_feed.domain.RawPost.Content.Type.PHOTO
 import com.github.telegram_bots.channels_feed.domain.RawPost.Content.Type.TEXT
 import com.github.telegram_bots.channels_feed.domain.RawPost.TextContent.Entity
-import java.time.Instant
 
 object RawPostDeserializer : JsonDeserializer<RawPost>() {
     private val entityTypeLookup = Entity.Type.values().map { it.value to it }.toMap()
@@ -23,7 +22,6 @@ object RawPostDeserializer : JsonDeserializer<RawPost>() {
         return RawPost(
                 channelId = node.get("chat_id_").asLong(),
                 messageId = node.get("id_").asLong(),
-                date = node.get("date_").asLong().let { Instant.ofEpochSecond(it) },
                 content = deserializeContent(node.get("content_"))
         )
     }

@@ -21,7 +21,7 @@ class ChannelRepository(private val jdbc: JdbcTemplate) {
 
     private object Mapper : RowMapper<Channel> {
         override fun mapRow(rs: ResultSet, rowNum: Int) = Channel(
-                id = rs.getInt("id"),
+                id = rs.getLong("id"),
                 telegramId = rs.getLong("telegram_id"),
                 url = rs.getString("url"),
                 name = rs.getString("name"),

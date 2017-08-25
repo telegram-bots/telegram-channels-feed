@@ -3,12 +3,12 @@ package com.github.telegram_bots.channels_feed.service.processor
 import com.github.telegram_bots.channels_feed.domain.*
 import com.github.telegram_bots.channels_feed.domain.ProcessedPost.Mode.HTML
 import com.github.telegram_bots.channels_feed.domain.ProcessedPost.Mode.TEXT
-import com.github.telegram_bots.channels_feed.service.processor.PostProcessor.ProcessType.FULL
+import com.github.telegram_bots.channels_feed.domain.ProcessedPostGroup.Type.FULL
 import org.springframework.stereotype.Component
 
 @Component
 class FullPostProcessor : AbstractPostProcessor(FULL) {
-    override fun process(postInfo: PostInfo): List<ProcessedPost> {
+    override fun process(postInfo: RawPostData): List<ProcessedPost> {
         val fileId = postInfo.fileID
         val firstLink = extractFirstLink(postInfo)
         val header = makeHeader(postInfo)
@@ -48,6 +48,6 @@ class FullPostProcessor : AbstractPostProcessor(FULL) {
         )
     }
 
-    private fun makeHeader(info: PostInfo) =
+    private fun makeHeader(info: RawPostData) =
         """<a href="https://t.me/${info.channel.url}">${info.channel.name}</a>:$SEPARATOR"""
 }

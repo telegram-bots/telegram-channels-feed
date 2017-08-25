@@ -1,6 +1,6 @@
 package com.github.telegram_bots.channels_feed
 
-import mu.KotlinLogging
+import mu.KLogging
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.SpringApplication
@@ -11,13 +11,11 @@ import org.springframework.core.env.Environment
 @SpringBootApplication
 @EnableCaching
 class ProcessorApplication(private val env: Environment) : ApplicationRunner {
-    private val log = KotlinLogging.logger {}
-
     override fun run(args: ApplicationArguments) {
-        log.info { env }
+        logger.info { env }
     }
 
-    companion object {
+    companion object : KLogging() {
         @JvmStatic
         fun main(args: Array<String>) {
             SpringApplication.run(ProcessorApplication::class.java, *args)

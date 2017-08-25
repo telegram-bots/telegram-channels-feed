@@ -81,15 +81,15 @@ class UpdatesNotifier:
 
         has_errors = False
         post_group = PostGroup(json.loads(body, encoding=encoding))
-        channel = self.notifications.get_channel_info(post_group.channel_id)
 
-        for notify in self.notifications.list_not_notified(channel.telegram_id, post_group.message_id, False):
+        for notify in self.notifications.list_not_notified(post_group.channel_id, post_group.message_id, False):
             try:
                 user = notify.user
                 posts = post_group.posts['FULL']  # User settings
                 for post in posts:
-                    send_post(channel.id, user, post)
-                    mark_subscription(channel.id, post_group.message_id, user)
+                    send_post(post_group.channel_id, user, post)
+                if not has_errors:
+                    mark_subscription(post_group.channel_id, post_group.message_id, user)
             except:
                 has_errors = True
                 logging.exception("Failed to deliver message")
@@ -98,5 +98,5 @@ class UpdatesNotifier:
         if has_errors:
             return
 
-        mark_channel(channel.id, post_group.message_id)
+        mark_channel(post_group.channel_id, post_group.message_id)
         acknowledge_message()

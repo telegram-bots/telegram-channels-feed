@@ -1,7 +1,7 @@
 package com.github.telegram_bots.channels_feed.domain
 
 data class Channel(
-        val id: Int,
+        val id: Long,
         val telegramId: Long,
         val url: String,
         val name: String,

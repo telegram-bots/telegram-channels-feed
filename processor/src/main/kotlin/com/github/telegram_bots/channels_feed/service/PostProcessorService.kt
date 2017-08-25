@@ -1,6 +1,6 @@
 package com.github.telegram_bots.channels_feed.service
 
-import com.github.telegram_bots.channels_feed.domain.PostInfo
+import com.github.telegram_bots.channels_feed.domain.RawPostData
 import com.github.telegram_bots.channels_feed.domain.ProcessedPostGroup
 import com.github.telegram_bots.channels_feed.domain.RawPost
 import com.github.telegram_bots.channels_feed.domain.RawPost.PhotoContent
@@ -34,30 +34,30 @@ class PostProcessorService(
     @StreamListener(Processor.INPUT)
     fun process(raw: RawPost) {
         Observable.just(raw)
-                .map(this::postInfo)
-                .doOnNext { log.debug { "Raw post: $it" } }
+                .map(this::postData)
+                .doOnNext { log.debug { "Raw post data: $it" } }
                 .map(this::processPostData)
                 .doOnNext { log.debug { "Processed post: $it" } }
                 .doOnSubscribe { d -> disposable = d }
                 .subscribe(this::send, this::onError)
     }
 
-    private fun postInfo(raw: RawPost): PostInfo {
+    private fun postData(raw: RawPost): RawPostData {
         val channel = channelRepository.find(raw.channelId)
         val fileId = when (raw.content) {
             is PhotoContent -> cachingService.compute(raw.content.photoId)
             else -> null
         }
 
-        return PostInfo(raw, channel, fileId)
+        return RawPostData(raw, channel, fileId)
     }
 
-    private fun processPostData(info: PostInfo): ProcessedPostGroup {
+    private fun processPostData(info: RawPostData): ProcessedPostGroup {
         val posts = postProcessors
                 .map { p -> p.type to p.process(info) }
                 .toMap()
 
-        return ProcessedPostGroup(info.raw.channelId, info.raw.messageId, posts)
+        return ProcessedPostGroup(info.channel.id, info.raw.messageId, posts)
     }
 
     private fun send(postGroup: ProcessedPostGroup) {
