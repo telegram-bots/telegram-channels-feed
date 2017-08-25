@@ -23,7 +23,3 @@ spring:
 processor:
   bot-token: ${CF_BOT_TOKEN}
   tg-cli-url: ${CF_TGCLI_URL}
-
-logging:
-  root:
-    level: INFO
