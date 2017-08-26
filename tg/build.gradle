@@ -1,0 +1,63 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.1.4-2"
+    id "org.jetbrains.kotlin.plugin.spring" version "1.1.4-2"
+    id "org.jetbrains.kotlin.plugin.noarg" version "1.1.4-2"
+    id "org.springframework.boot" version "1.5.6.RELEASE"
+}
+
+group "com.github.telegram_bots.channels_feed.tg"
+version "0.0.1"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+    maven { url "https://jitpack.io" }
+}
+
+noArg {
+    annotation("org.springframework.boot.context.properties.ConfigurationProperties")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:Dalston.SR2"
+    }
+}
+
+dependencies {
+    compile("org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.4-2")
+
+    // Web
+    compile("org.springframework.boot:spring-boot-starter-web")
+
+    // Rabbit
+    compile("org.springframework.cloud:spring-cloud-starter-stream-rabbit")
+
+    // Telegram
+    compile("com.github.badoualy:kotlogram:65c96ce") {
+        exclude module: "slf4j-simple"
+    }
+
+    // Jackson
+    compile("com.fasterxml.jackson.module:jackson-module-kotlin:2.8.9")
+    compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.9")
+
+    // Rx
+    compile("io.reactivex.rxjava2:rxkotlin:2.1.0")
+
+    // Postgres
+    compile("org.springframework.boot:spring-boot-starter-jdbc")
+    compile("org.postgresql:postgresql:42.1.3")
+
+    // Logger
+    compile("io.github.microutils:kotlin-logging:1.4.6")
+
+    runtime("org.springframework.boot:spring-boot-devtools")
+
+    compileOnly("org.springframework.boot:spring-boot-configuration-processor")
+
+    testCompile("org.springframework.boot:spring-boot-starter-test")
+}
+
+task wrapper(type: Wrapper) { gradleVersion = "4.1" }

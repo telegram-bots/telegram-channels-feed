@@ -41,6 +41,19 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  tg:
+    build: ./tg
+    env_file: .app_env
+    environment:
+      - JAVA_OPTS=-Xmx256M -Xms256M
+    mem_limit: 512mb
+    volumes:
+      - ./storage/tg:/tmp
+    depends_on:
+      rabbit:
+        condition: service_healthy
+    restart: unless-stopped
+
   tg-cli:
     build: ./tg-cli
     env_file: .app_env

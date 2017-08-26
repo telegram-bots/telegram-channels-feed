@@ -16,6 +16,7 @@ class UpdatesNotifier:
         self.notifications = notifications
         self.queue_consumer = queue_consumer
         self.tg_cli_user = urlparse(config['tg-cli']['url']).username
+        self.bot = None
 
     def instance(self, bot):
         def run():
@@ -36,43 +37,50 @@ class UpdatesNotifier:
                 )
             ]])
 
-        def get_args(post: Post, user: User):
-            args = {
-                'chat_id': user.telegram_id if user.redirect_url is None else user.redirect_url,
-                'text': post.text,
-                'caption': post.text,
-                'parse_mode': post.mode,
-                'reply_markup': make_keyboard(),
-                'disable_web_page_preview': not post.preview_enabled,
-                'photo': post.file_id
-            }
+        def get_args(group: PostGroup, post: Post, user: User):
+            chat_id = user.telegram_id if user.redirect_url is None else user.redirect_url
+
+            if post.mode == "AS_IS":
+                args = {
+                    'chat_id': chat_id,
+                    'from_chat_id': '@' + group.channel_url,
+                    'message_id': group.post_id
+                }
+            else:
+                args = {
+                    'chat_id': chat_id,
+                    'text': post.text,
+                    'parse_mode': post.mode,
+                    'reply_markup': make_keyboard(),
+                    'disable_web_page_preview': not post.preview_enabled,
+                }
 
             return args
 
         def get_callback(post: Post):
-            if post.file_id is not None:
-                return self.bot.send_photo
+            if post.mode == "AS_IS":
+                return self.bot.forward_message
             else:
                 return self.bot.send_message
 
-        def send_post(channel_id: int, user: User, post: Post):
-            logging.info(f"Sending channel {channel_id} content to user {user.id}")
+        def send_post(group: PostGroup, post: Post, user: User):
+            logging.info(f"Sending channel {group.channel_id} content to user {user.id}")
             retry_call(
                 get_callback(post),
-                fkwargs=get_args(post, user),
+                fkwargs=get_args(group, post, user),
                 tries=5,
                 delay=10
             )
 
-        def mark_subscription(channel_id: int, message_id: int, user: User):
-            logging.info(f"Setting subscription {user.id}:{channel_id} last_message_id to {message_id})")
-            self.notifications.mark_subscription(user.id, channel_id, message_id)
+        def mark_sub(group: PostGroup, user: User):
+            logging.info(f"Setting subscription {user.id}:{group.channel_id} last_post_id to {group.post_id})")
+            self.notifications.mark_subscription(user.id, group.channel_id, group.post_id)
 
-        def mark_channel(channel_id: int, message_id: int):
-            logging.info(f"Setting channel {channel_id} last_message_id to {message_id})")
-            self.notifications.mark_channel(channel_id, message_id)
+        def mark_channel(group: PostGroup):
+            logging.info(f"Setting channel {group.channel_id} last_post_id to {group.post_id})")
+            self.notifications.mark_channel(group.channel_id, group.post_id)
 
-        def acknowledge_message():
+        def ack_message():
             logging.info(f"Acknowledging message #{basic_deliver.delivery_tag}")
             mq_channel.basic_ack(basic_deliver.delivery_tag)
 
@@ -80,16 +88,14 @@ class UpdatesNotifier:
         logging.debug(f"From app {properties.app_id}: {body}")
 
         has_errors = False
-        post_group = PostGroup(json.loads(body, encoding=encoding))
+        group = PostGroup(json.loads(body, encoding=encoding))
 
-        for notify in self.notifications.list_not_notified(post_group.channel_id, post_group.message_id, False):
+        for notify in self.notifications.list_not_notified(group.channel_id, group.post_id, False):
             try:
                 user = notify.user
-                posts = post_group.posts['FULL']  # User settings
-                for post in posts:
-                    send_post(post_group.channel_id, user, post)
-                if not has_errors:
-                    mark_subscription(post_group.channel_id, post_group.message_id, user)
+                post = group.posts['FULL']  # User settings
+                send_post(group, post, user)
+                mark_sub(group, user)
             except:
                 has_errors = True
                 logging.exception("Failed to deliver message")
@@ -98,5 +104,5 @@ class UpdatesNotifier:
         if has_errors:
             return
 
-        mark_channel(post_group.channel_id, post_group.message_id)
-        acknowledge_message()
+        mark_channel(group)
+        ack_message()

@@ -10,10 +10,11 @@ class Channel(Base):
     __tablename__ = 'channels'
 
     id = Column(Integer, primary_key=True)
-    telegram_id = Column(BigInteger, nullable=False, unique=True)
+    telegram_id = Column(Integer, nullable=False, unique=True)
+    hash = Column(BigInteger, nullable=False)
     url = Column(String, nullable=False, index=True)
     name = Column(String, nullable=False)
-    last_message_id = Column(BigInteger, nullable=True)
+    last_post_id = Column(Integer, nullable=True)
 
 
 class User(Base):
@@ -28,10 +29,10 @@ class Subscription(Base):
     __tablename__ = 'subscriptions'
     __table_args__ = (PrimaryKeyConstraint('channel_id', 'user_id'), )
 
-    channel_id = Column(Integer, ForeignKey('channels.id'), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    last_message_id = Column(BigInteger, nullable=True)
-    channel = relationship(Channel)
+    channel_id = Column(Integer, ForeignKey('channels.id'), nullable=False)
+    last_post_id = Column(Integer, nullable=True)
     user = relationship(User)
+    channel = relationship(Channel)
 
 

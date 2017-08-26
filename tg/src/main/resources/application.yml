@@ -1,0 +1,25 @@
+spring:
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: Europe/Moscow
+    date-format: yyyy-MM-dd'T'HH:mm:ssZ
+  cloud:
+    stream:
+      bindings:
+        output:
+          producer:
+            required-groups:
+              - raw
+          destination: channels_feed.raw
+          content-type: application/json
+
+tg:
+  api-id:
+  api-hash:
+  model: desktop
+  app-version: 0.0.1
+  sys-version: 0.0.1
+  lang-code: en
+  bot-name: ChannelsFeedBot
+  storage-path: ${user.home}/.telegram-channels-feed
