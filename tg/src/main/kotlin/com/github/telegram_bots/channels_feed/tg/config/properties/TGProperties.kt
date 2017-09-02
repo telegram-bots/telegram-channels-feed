@@ -9,7 +9,7 @@ import java.nio.file.Path
 data class TGProperties(
         var apiId: Int,
         var apiHash: String,
-        val number: String,
+        var number: String,
         var model: String,
         var appVersion: String,
         var sysVersion: String,

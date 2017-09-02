@@ -1,7 +1,5 @@
 package com.github.telegram_bots.channels_feed.tg.service
 
-import com.github.badoualy.telegram.api.Kotlogram
-import com.github.badoualy.telegram.api.TelegramApp
 import com.github.badoualy.telegram.api.TelegramClient
 import com.github.badoualy.telegram.tl.api.TLMessage
 import com.github.badoualy.telegram.tl.exception.RpcErrorException
@@ -29,47 +27,16 @@ import javax.annotation.PreDestroy
 
 @Service
 @EnableBinding(Source::class)
-class TelegramPostsUpdater(
-        app: TelegramApp,
-        storage: TelegramConfigStorage,
-        private val props: TGProperties,
+class TGPostsUpdater(
+        private val client: TelegramClient,
         private val source: Source,
         private val repository: ChannelRepository,
         private val processors: Collection<PostProcessor>
 ) {
     companion object : KLogging()
 
-    private val client: TelegramClient = Kotlogram.getDefaultClient(app, storage)
     private val random: ThreadLocalRandom = ThreadLocalRandom.current()
     private var disposable: Disposable? = null
-
-    @PostConstruct
-    fun init() {
-        try {
-            val sentCode = client.authSendCode(false, props.number, true)
-            logger.info { "Authentication code: " }
-            val code = Scanner(System.`in`).nextLine()
-
-            val authorization =
-                    try {
-                        client.authSignIn(props.number, sentCode.phoneCodeHash, code)
-                    } catch (e: RpcErrorException) {
-                        if (!e.tag.equals("SESSION_PASSWORD_NEEDED", true)) throw e
-
-                        logger.info { "Two-step auth password: " }
-                        val password = Scanner(System.`in`).nextLine()
-                        client.authCheckPassword(password)
-                    }
-
-            authorization.user.asUser.apply {
-                logger.info { "You are now signed in as $firstName $lastName @$username" }
-            }
-        } catch (e: RpcErrorException) {
-            logger.error { e }
-        } catch (e: IOException) {
-            logger.error { e }
-        }
-    }
 
     @PreDestroy
     fun onDestroy() {
@@ -77,7 +44,7 @@ class TelegramPostsUpdater(
         client.close()
     }
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 60_000)
     fun run() {
         iterateChannels()
                 .flatMap { download(it) }

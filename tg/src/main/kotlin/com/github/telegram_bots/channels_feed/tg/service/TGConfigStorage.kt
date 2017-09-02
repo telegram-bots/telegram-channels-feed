@@ -11,7 +11,7 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
 
 @Component
-class TelegramConfigStorage(private val props: TGProperties) : TelegramApiStorage {
+class TGConfigStorage(private val props: TGProperties) : TelegramApiStorage {
     companion object {
         const val AUTH_KEY_FILE = "auth.key"
         const val NEAREST_DC_FILE = "dc.save"
