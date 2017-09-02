@@ -2,10 +2,11 @@ package com.github.telegram_bots.channels_feed.tg.service.processor
 
 import com.github.badoualy.telegram.api.utils.getMessageOrEmpty
 import com.github.badoualy.telegram.tl.api.*
-import com.github.telegram_bots.channels_feed.tg.domain.*
+import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPost
 import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPost.Mode.AS_IS
 import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPost.Mode.HTML
 import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPostGroup.Type.SHORT
+import com.github.telegram_bots.channels_feed.tg.domain.RawPostData
 import com.github.telegram_bots.channels_feed.tg.util.UTF_16LE
 import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
@@ -32,7 +33,7 @@ class ShortPostProcessor : PostProcessor {
         return ProcessedPost(text = text, previewEnabled = firstLink != null, mode = HTML)
     }
 
-    private fun processText(link: Link, header: Header, data: RawPostData): String {
+    private fun processText(link: String?, header: String, data: RawPostData): String {
         val processed = data.raw
                 .getMessageOrEmpty()
                 .replaceHTMLTags()
@@ -44,7 +45,7 @@ class ShortPostProcessor : PostProcessor {
     private fun makeHeader(data: RawPostData) =
             """<a href="https://t.me/${data.channel.url}/${data.raw.id}">${data.channel.name}</a>:$SEPARATOR"""
 
-    private fun extractFirstLink(data: RawPostData): Link {
+    private fun extractFirstLink(data: RawPostData): String? {
         return data.raw.entities
                 ?.find { it is TLMessageEntityTextUrl || it is TLMessageEntityUrl }
                 ?.let {

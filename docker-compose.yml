@@ -7,7 +7,7 @@ services:
       - ./bot:/code
       - ./storage/bot:/data
     depends_on:
-      tg-cli:
+      tg:
         condition: service_healthy
       db:
         condition: service_healthy
@@ -26,21 +26,6 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  processor:
-    build: ./processor
-    env_file: .app_env
-    environment:
-      - JAVA_OPTS=-Xmx256M -Xms256M
-    mem_limit: 512mb
-    volumes:
-      - ./storage/processor:/tmp
-    depends_on:
-      db:
-        condition: service_healthy
-      rabbit:
-        condition: service_healthy
-    restart: unless-stopped
-
   tg:
     build: ./tg
     env_file: .app_env
@@ -49,19 +34,11 @@ services:
     mem_limit: 512mb
     volumes:
       - ./storage/tg:/tmp
-    depends_on:
-      rabbit:
-        condition: service_healthy
-    restart: unless-stopped
-
-  tg-cli:
-    build: ./tg-cli
-    env_file: .app_env
-    volumes:
-      - ./storage/tg-cli:/telegram
     ports:
-      - "4458:4458"
+      - "8894:8894"
     depends_on:
+      db:
+        condition: service_healthy
       rabbit:
         condition: service_healthy
     restart: unless-stopped

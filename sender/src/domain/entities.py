@@ -14,7 +14,8 @@ class Channel(Base):
     hash = Column(BigInteger, nullable=False)
     url = Column(String, nullable=False, index=True)
     name = Column(String, nullable=False)
-    last_post_id = Column(Integer, nullable=True)
+    last_post_id = Column(Integer, nullable=False)
+    last_sent_id = Column(Integer, nullable=True)
 
 
 class User(Base):
@@ -31,7 +32,7 @@ class Subscription(Base):
 
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     channel_id = Column(Integer, ForeignKey('channels.id'), nullable=False)
-    last_post_id = Column(Integer, nullable=True)
+    last_sent_id = Column(Integer, nullable=True)
     user = relationship(User)
     channel = relationship(Channel)
 

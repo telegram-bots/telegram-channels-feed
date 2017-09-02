@@ -73,11 +73,11 @@ class UpdatesNotifier:
             )
 
         def mark_sub(group: PostGroup, user: User):
-            logging.info(f"Setting subscription {user.id}:{group.channel_id} last_post_id to {group.post_id})")
+            logging.info(f"Setting subscription {user.id}:{group.channel_id} last_sent_id to {group.post_id})")
             self.notifications.mark_subscription(user.id, group.channel_id, group.post_id)
 
         def mark_channel(group: PostGroup):
-            logging.info(f"Setting channel {group.channel_id} last_post_id to {group.post_id})")
+            logging.info(f"Setting channel {group.channel_id} last_sent_id to {group.post_id})")
             self.notifications.mark_channel(group.channel_id, group.post_id)
 
         def ack_message():

@@ -4,8 +4,8 @@ import pika
 
 
 class QueueConsumer:
-    EXCHANGE_NAME = 'channels_feed.processed'
-    QUEUE_NAME = 'channels_feed.processed.processed'
+    EXCHANGE_NAME = 'channels_feed.posts'
+    QUEUE_NAME = 'channels_feed.posts.posts'
     EXCHANGE_TYPE = 'topic'
     ROUTING_KEY = '#'
     DURABLE = True

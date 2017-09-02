@@ -20,8 +20,8 @@ class Notifications:
             .filter(Channel.id == channel_id)
 
         if not ignore_message_id:
-            query = query.filter(or_(Channel.last_post_id < post_id, Channel.last_post_id == None)) \
-                .filter(or_(Subscription.last_post_id < post_id, Subscription.last_post_id == None))
+            query = query.filter(or_(Channel.last_sent_id < post_id, Channel.last_sent_id == None)) \
+                .filter(or_(Subscription.last_sent_id < post_id, Subscription.last_sent_id == None))
 
         return db.get_lazy(query)
 
@@ -30,14 +30,14 @@ class Notifications:
             .query(Subscription) \
             .filter(Subscription.user_id == user_id) \
             .filter(Subscription.channel_id == channel_id) \
-            .filter(or_(Subscription.last_post_id < post_id, Subscription.last_post_id == None)) \
-            .update({Subscription.last_post_id: post_id})
+            .filter(or_(Subscription.last_sent_id < post_id, Subscription.last_sent_id == None)) \
+            .update({Subscription.last_sent_id: post_id})
         db.session.commit()
 
     def mark_channel(self, channel_id: int, message_id: int):
         db.session \
             .query(Channel) \
             .filter(Channel.id == channel_id) \
-            .filter(or_(Channel.last_post_id < message_id, Channel.last_post_id == None)) \
-            .update({Channel.last_post_id: message_id})
+            .filter(or_(Channel.last_sent_id < message_id, Channel.last_sent_id == None)) \
+            .update({Channel.last_sent_id: message_id})
         db.session.commit()

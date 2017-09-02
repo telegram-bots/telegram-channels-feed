@@ -5,13 +5,13 @@ import com.github.badoualy.telegram.mtproto.auth.AuthKey
 import com.github.badoualy.telegram.mtproto.model.DataCenter
 import com.github.badoualy.telegram.mtproto.model.MTSession
 import com.github.telegram_bots.channels_feed.tg.config.properties.TGProperties
-import org.springframework.context.annotation.Configuration
+import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
 
-@Configuration
-class FileAPIStorage(private val props: TGProperties) : TelegramApiStorage {
+@Component
+class TelegramConfigStorage(private val props: TGProperties) : TelegramApiStorage {
     companion object {
         const val AUTH_KEY_FILE = "auth.key"
         const val NEAREST_DC_FILE = "dc.save"

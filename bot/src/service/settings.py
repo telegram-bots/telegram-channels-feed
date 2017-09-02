@@ -20,7 +20,7 @@ class Settings:
             if has_subscription:
                 raise RedirectNotAllowed()
 
-            user_repository.change_settings(id_=user.id, redirect_url=f"@{command.channel_url}")
+            user_repository.change_settings(user_id=user.id, redirect_url=f"@{command.channel_url}")
 
         try:
             db.execute_in_transaction(callback)
@@ -36,7 +36,7 @@ class Settings:
             if user is None or user.redirect_url is None:
                 raise RedirectChangeError("You haven't added a redirect!")
 
-            user_repository.change_settings(id_=user.id, redirect_url=None)
+            user_repository.change_settings(user_id=user.id, redirect_url=None)
 
         try:
             db.execute_in_transaction(callback)

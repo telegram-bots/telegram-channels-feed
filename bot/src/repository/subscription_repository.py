@@ -1,7 +1,5 @@
-from sqlalchemy import or_
 from sqlalchemy.sql import text
-from sqlalchemy.orm import joinedload
-from typing import Generator
+from typing import List
 
 from src.config import db
 from src.domain.entities import Subscription, Channel
@@ -51,21 +49,23 @@ class SubscriptionRepository:
                 {'user_id': user_id, 'channel_url': channel_url}
             ).fetchone()[0] > 0
 
-    def all(self, channel_telegram_id: int, message_id: int) -> Generator[Subscription, None, None]:
-        query = db.session \
-            .query(Subscription) \
-            .options(joinedload(Subscription.user)) \
-            .join(Subscription.channel) \
-            .filter(Channel.telegram_id == channel_telegram_id) \
-            .filter(or_(Channel.last_message_id < message_id, Channel.last_message_id == None)) \
-            .filter(or_(Subscription.last_message_id < message_id, Subscription.last_message_id == None))
-
-        return db.get_lazy(query)
-
-    def set_message_id(self, user_id: int, channel_id: int, message_id: int):
-        db.session \
-            .query(Subscription) \
-            .filter(Subscription.user_id == user_id) \
-            .filter(Subscription.channel_id == channel_id) \
-            .filter(or_(Subscription.last_message_id < message_id, Subscription.last_message_id == None)) \
-            .update({Subscription.last_message_id: message_id})
+    def list(self, user_telegram_id: int) -> List[Channel]:
+        """
+            Get list of channels user subscribed to
+            :param user_telegram_id: Telegram ID of user
+            :rtype: List[Channel]
+            :return: List of channels
+            """
+        return db.session \
+            .query(Channel) \
+            .from_statement(text(
+                """
+                SELECT ch.id, ch.telegram_id, ch.url, ch.name, ch.last_message_id
+                FROM Subscriptions AS sub
+                JOIN Users AS u ON u.id = sub.user_id
+                JOIN Channels AS ch ON ch.id = sub.channel_id
+                WHERE u.telegram_id = :user_telegram_id
+                """
+            )) \
+            .params(user_telegram_id=user_telegram_id) \
+            .all()

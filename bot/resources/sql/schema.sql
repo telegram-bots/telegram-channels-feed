@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS Channels (
   hash         BIGINT          NOT NULL,
   url          VARCHAR(32)     NOT NULL,
   name         VARCHAR(255)    NOT NULL,
-  last_post_id INT
+  last_post_id INT             NOT NULL,
+  last_sent_id INT
 );
 CREATE INDEX IF NOT EXISTS url_index
   ON Channels (url);
@@ -20,6 +21,6 @@ CREATE TABLE IF NOT EXISTS Users (
 CREATE TABLE IF NOT EXISTS Subscriptions (
   user_id      INT NOT NULL,
   channel_id   INT NOT NULL,
-  last_post_id INT,
+  last_sent_id INT,
   CONSTRAINT u_ch_constraint UNIQUE (user_id, channel_id)
 );

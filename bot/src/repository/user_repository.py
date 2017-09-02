@@ -40,8 +40,8 @@ class UserRepository:
             .params(telegram_id=telegram_id) \
             .first()
 
-    def change_settings(self, id_: int, redirect_url: str):
+    def change_settings(self, user_id: int, redirect_url: Optional[str]):
         db.session \
             .query(User) \
-            .filter(User.id == id_) \
+            .filter(User.id == user_id) \
             .update({User.redirect_url: redirect_url})

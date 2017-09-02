@@ -6,5 +6,6 @@ data class Channel(
         val hash: Long,
         val url: String,
         val name: String,
-        val lastPostId: Int?
+        val lastPostId: Int,
+        val lastSentId: Int?
 )

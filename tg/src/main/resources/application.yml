@@ -10,16 +10,16 @@ spring:
         output:
           producer:
             required-groups:
-              - raw
-          destination: channels_feed.raw
+              - posts
+          destination: channels_feed.posts
           content-type: application/json
 
 tg:
   api-id:
   api-hash:
+  number:
   model: desktop
   app-version: 0.0.1
   sys-version: 0.0.1
   lang-code: en
-  bot-name: ChannelsFeedBot
   storage-path: ${user.home}/.telegram-channels-feed

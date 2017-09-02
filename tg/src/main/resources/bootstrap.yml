@@ -1,3 +1,5 @@
 spring:
   application:
     name: tg
+server:
+  port: 8894

@@ -1,9 +1,0 @@
-#!/bin/bash
-set -eo pipefail
-
-host="$(hostname -i || echo '127.0.0.1')"
-port=4458
-
-nc -z -v -w5 $host $port
-
-exit $?

@@ -8,14 +8,35 @@ import java.sql.ResultSet
 
 @Repository
 class ChannelRepository(private val jdbc: JdbcTemplate) {
-    fun find(telegramId: Int): Channel? {
+    fun find(url: String): Channel? {
         return jdbc
                 .query(
-                        "SELECT * FROM Channels WHERE telegram_id = ?",
-                        arrayOf(telegramId),
+                        "SELECT * FROM Channels WHERE url = ?",
+                        arrayOf(url),
                         Mapper
                 )
                 .firstOrNull()
+    }
+
+    fun save(channel: Channel): Channel {
+        jdbc.update("""INSERT INTO Channels(telegram_id, hash, url, name, last_post_id, last_sent_id)
+            VALUES (?, ?, ?, ?, ?, ?)""",
+                channel.telegramId,
+                channel.hash,
+                channel.url,
+                channel.name,
+                channel.lastPostId,
+                channel.lastSentId
+        )
+
+        return find(channel.url)!!
+    }
+
+    fun delete(channel: Channel): Boolean {
+        return jdbc.update(
+                "DELETE FROM Channels WHERE id = ?",
+                arrayOf(channel.id)
+        ) >= 1
     }
 
     fun list(limit: Int, offset: Int): List<Channel> {
@@ -27,10 +48,10 @@ class ChannelRepository(private val jdbc: JdbcTemplate) {
                 )
     }
 
-    fun updateLastPostId(telegramId: Int, lastPostId: Int): Boolean {
+    fun updateLastPostId(id: Int, lastPostId: Int): Boolean {
         return jdbc.update(
-                "UPDATE Channels SET last_post_id = ? WHERE telegram_id = ?",
-                lastPostId, telegramId
+                "UPDATE Channels SET last_post_id = ? WHERE id = ?",
+                lastPostId, id
         ) >= 1
     }
 
@@ -41,7 +62,8 @@ class ChannelRepository(private val jdbc: JdbcTemplate) {
                 hash = rs.getLong("hash"),
                 url = rs.getString("url"),
                 name = rs.getString("name"),
-                lastPostId = rs.getObject("last_post_id")?.let { it as? Int }
+                lastPostId = rs.getInt("last_post_id"),
+                lastSentId = rs.getObject("last_sent_id")?.let { it as? Int }
         )
     }
 }
