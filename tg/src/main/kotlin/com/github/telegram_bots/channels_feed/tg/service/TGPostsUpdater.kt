@@ -2,8 +2,7 @@ package com.github.telegram_bots.channels_feed.tg.service
 
 import com.github.badoualy.telegram.api.TelegramClient
 import com.github.badoualy.telegram.tl.api.TLMessage
-import com.github.badoualy.telegram.tl.exception.RpcErrorException
-import com.github.telegram_bots.channels_feed.tg.config.properties.TGProperties
+import com.github.telegram_bots.channels_feed.tg.config.properties.ProcessingProperties
 import com.github.telegram_bots.channels_feed.tg.domain.Channel
 import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPostGroup
 import com.github.telegram_bots.channels_feed.tg.domain.RawPostData
@@ -18,16 +17,13 @@ import org.springframework.cloud.stream.annotation.EnableBinding
 import org.springframework.cloud.stream.messaging.Source
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import java.io.IOException
-import java.util.*
 import java.util.concurrent.ThreadLocalRandom
-import java.util.concurrent.TimeUnit
-import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 
 @Service
 @EnableBinding(Source::class)
 class TGPostsUpdater(
+        private val props: ProcessingProperties,
         private val client: TelegramClient,
         private val source: Source,
         private val repository: ChannelRepository,
@@ -62,17 +58,20 @@ class TGPostsUpdater(
     }
 
     private fun iterateChannels(): Observable<Channel> {
-        return Observable.fromCallable(IterateChannelsJob(repository, 10))
+        return Observable.fromCallable(IterateChannelsJob(repository, props.channelsBatchSize))
                 .flatMap { it }
                 .zipWith(
-                        Observable.interval(random.nextLong(30, 120), TimeUnit.SECONDS),
+                        Observable.interval(
+                                random.nextLong(props.postsIntervalMin, props.postsIntervalMax),
+                                props.postsIntervalTimeUnit
+                        ),
                         BiFunction<Channel, Long, Channel> { channel, _ -> channel }
                 )
                 .doOnNext { logger.info { "Processing channel $it" } }
     }
 
     private fun download(channel: Channel): Observable<Pair<Channel, List<TLMessage>>> {
-        return Observable.fromCallable(DownloadPostJob(client, channel, 50))
+        return Observable.fromCallable(DownloadPostJob(client, channel, props.postsBatchSize))
                 .flatMap { it }
                 .toList()
                 .toObservable()
@@ -98,7 +97,7 @@ class TGPostsUpdater(
                 .toObservable()
     }
 
-    private fun markDownloaded(data: RawPostData): Observable<Channel> {
+    private fun markDownloaded(data: RawPostData): Observable<Boolean> {
         return Single.fromCallable(UpdateChannelLastPostIDJob(repository, data.channel, data.raw.id))
                 .flatMap { it }
                 .toObservable()

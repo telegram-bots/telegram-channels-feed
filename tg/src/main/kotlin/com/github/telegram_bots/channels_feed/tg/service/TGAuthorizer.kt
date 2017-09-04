@@ -49,7 +49,7 @@ class TGAuthorizer(
 
     private fun signIn(sentCode: String, typedCode: String): TLAuthorization {
         return try {
-            client.authSignIn(props.number, sentCode, typedCode)
+            client.authSignIn(props.phoneNumber, sentCode, typedCode)
         } catch (e: RpcErrorException) {
             if (!e.tag.equals("SESSION_PASSWORD_NEEDED", true)) throw e
             client.authCheckPassword(getTypedTwoStepAuthCode())
@@ -57,7 +57,7 @@ class TGAuthorizer(
     }
 
     private fun sendAuthCode(): String {
-        return client.authSendCode(false, props.number, true).phoneCodeHash
+        return client.authSendCode(false, props.phoneNumber, true).phoneCodeHash
     }
 
     private fun getTypedAuthCode(): String {

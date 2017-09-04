@@ -5,7 +5,7 @@ services:
     env_file: .app_env
     volumes:
       - ./bot:/code
-      - ./storage/bot:/data
+      - ~/.telegram-channels-feed/bot:/data
     depends_on:
       tg:
         condition: service_healthy
@@ -18,7 +18,7 @@ services:
     env_file: .app_env
     volumes:
       - ./sender:/code
-      - ./storage/sender:/data
+      - ~/.telegram-channels-feed/sender:/data
     depends_on:
       db:
         condition: service_healthy
@@ -33,7 +33,7 @@ services:
       - JAVA_OPTS=-Xmx256M -Xms256M
     mem_limit: 512mb
     volumes:
-      - ./storage/tg:/tmp
+      - ~/.telegram-channels-feed/tg/tmp:/tmp
     ports:
       - "8894:8894"
     depends_on:
@@ -46,7 +46,7 @@ services:
   db:
     image: "healthcheck/postgres:alpine"
     volumes:
-      - ./storage/db:/var/lib/postgresql/data
+      - ~/.telegram-channels-feed/db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     restart: unless-stopped
@@ -55,7 +55,7 @@ services:
     image: "rednblack/rabbitmq"
     hostname: rabbit
     volumes:
-      - ./storage/rabbitmq:/var/lib/rabbitmq
+      - ~/.telegram-channels-feed/rabbitmq:/var/lib/rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"

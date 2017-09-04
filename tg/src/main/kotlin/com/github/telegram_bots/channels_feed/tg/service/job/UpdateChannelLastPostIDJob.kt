@@ -10,13 +10,6 @@ class UpdateChannelLastPostIDJob(
         private val repository: ChannelRepository,
         private val channel: Channel,
         private val lastPostId: Int
-) : Callable<Single<Channel>> {
-    override fun call(): Single<Channel> {
-        val success = repository.updateLastPostId(channel.id, lastPostId)
-        return if (success) channel.copy(lastPostId = lastPostId).toSingle()
-            else Single.error(FailedToUpdatePostIdException(lastPostId, channel))
-    }
-
-    class FailedToUpdatePostIdException(postId: Int, channel: Channel) :
-            RuntimeException("Failed to update postId $postId for channel $channel")
+) : Callable<Single<Boolean>> {
+    override fun call() = repository.updateLastPostId(channel.id, lastPostId).toSingle()
 }

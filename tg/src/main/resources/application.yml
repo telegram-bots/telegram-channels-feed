@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: tg
   jackson:
     serialization:
       write-dates-as-timestamps: false
@@ -14,12 +16,22 @@ spring:
           destination: channels_feed.posts
           content-type: application/json
 
+server:
+  port: 8894
+
 tg:
-  api-id:
-  api-hash:
-  number:
-  model: desktop
-  app-version: 0.0.1
-  sys-version: 0.0.1
+  api-id: ${CF_TG_API_ID}
+  api-hash: ${CF_TG_API_HASH}
+  phone-number: ${CF_TG_NUMBER}
+  model: Bot
+  app-version: ${VERSION}
+  sys-version: ${VERSION}
   lang-code: en
-  storage-path: ${user.home}/.telegram-channels-feed
+  storage-path: ${user.home}/.telegram-channels-feed/tg
+
+processing:
+  channels-batch-size: 10
+  posts-batch-size: 50
+  posts-interval-min: 10
+  posts-interval-max: 120
+  posts-interval-time-unit: SECONDS

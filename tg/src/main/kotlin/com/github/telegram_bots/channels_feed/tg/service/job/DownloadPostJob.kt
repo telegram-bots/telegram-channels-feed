@@ -14,7 +14,7 @@ class DownloadPostJob(
         private val batchSize: Int
 ) : Callable<Observable<TLMessage>> {
     override fun call(): Observable<TLMessage> {
-        return Observable.range(channel.lastPostId, batchSize)
+        return Observable.range(channel.lastPostId + 1, batchSize)
                 .toList()
                 .toObservable()
                 .map { TLInputChannel(channel.telegramId, channel.hash) to TLIntVector().apply { addAll(it) } }

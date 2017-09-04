@@ -35,7 +35,7 @@ class ChannelRepository(private val jdbc: JdbcTemplate) {
     fun delete(channel: Channel): Boolean {
         return jdbc.update(
                 "DELETE FROM Channels WHERE id = ?",
-                arrayOf(channel.id)
+                channel.id
         ) >= 1
     }
 
