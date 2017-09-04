@@ -12,37 +12,27 @@ import java.nio.file.StandardOpenOption.*
 
 @Component
 class TGConfigStorage(private val props: TGProperties) : TelegramApiStorage {
-    companion object {
-        const val AUTH_KEY_FILE = "auth.key"
-        const val NEAREST_DC_FILE = "dc.save"
-        const val SESSION_FILE = "session"
-    }
+    private val authKeyFile = "auth.key".toPath()
+    private val nearestDcFile = "dc.save".toPath()
+    private val sessionFile = "session".toPath()
 
-    override fun saveAuthKey(authKey: AuthKey) {
-        overwrite(props.storagePath.resolve(AUTH_KEY_FILE), authKey.key)
-    }
+    override fun saveAuthKey(authKey: AuthKey) = authKeyFile.write(authKey.key)
 
-    override fun loadAuthKey() = load(props.storagePath.resolve(AUTH_KEY_FILE)) { AuthKey(it) }
+    override fun loadAuthKey() = authKeyFile.load { AuthKey(it) }
 
-    override fun deleteAuthKey() {
-        Files.deleteIfExists(props.storagePath.resolve(AUTH_KEY_FILE))
-    }
+    override fun deleteAuthKey() = authKeyFile.delete()
 
-    override fun saveDc(dataCenter: DataCenter) {
-        overwrite(props.storagePath.resolve(NEAREST_DC_FILE), dataCenter.toString().toByteArray())
-    }
+    override fun saveDc(dataCenter: DataCenter) = nearestDcFile.write(dataCenter.toString().toByteArray())
 
     override fun loadDc(): DataCenter? {
-        return load(props.storagePath.resolve(NEAREST_DC_FILE)) { bytes ->
+        return nearestDcFile.load { bytes ->
             bytes.let { String(it) }
                 .split(":")
                 .let { DataCenter(it[0], it[1].toInt()) }
         }
     }
 
-    override fun deleteDc() {
-        Files.deleteIfExists(props.storagePath.resolve(NEAREST_DC_FILE))
-    }
+    override fun deleteDc() = nearestDcFile.delete()
 
     override fun saveSession(session: MTSession?) {
         if (session == null) return deleteSession()
@@ -53,11 +43,11 @@ class TGConfigStorage(private val props: TGProperties) : TelegramApiStorage {
             listOf(dataCenter, id, salt, contentRelatedCount, lastMessageId, tag)
         }.joinToString(System.lineSeparator()).toByteArray()
 
-        overwrite(props.storagePath.resolve(SESSION_FILE), content)
+        sessionFile.write(content)
     }
 
     override fun loadSession(): MTSession? {
-        return load(props.storagePath.resolve(SESSION_FILE)) {
+        return sessionFile.load {
             val params = String(it).split(System.lineSeparator())
             val dc = params[0].split(":")
 
@@ -72,16 +62,20 @@ class TGConfigStorage(private val props: TGProperties) : TelegramApiStorage {
         }
     }
 
-    private fun deleteSession() {
-        Files.deleteIfExists(props.storagePath.resolve(SESSION_FILE))
+    fun deleteSession() = sessionFile.delete()
+
+    private final fun String.toPath() = props.storagePath.resolve(this)
+
+    private fun Path.delete() {
+        Files.deleteIfExists(this)
     }
 
-    private fun overwrite(file: Path, content: ByteArray) {
-        Files.createDirectories(file.parent)
-        Files.write(file, content, CREATE, WRITE, TRUNCATE_EXISTING)
+    private fun Path.write(content: ByteArray) {
+        Files.createDirectories(parent)
+        Files.write(this, content, CREATE, WRITE, TRUNCATE_EXISTING)
     }
 
-    private fun <T> load(file: Path, mapper: (ByteArray) -> T): T? {
-        return if (!Files.exists(file)) null else Files.readAllBytes(file).let(mapper)
-    }
+    private fun <T> Path.load(mapper: (ByteArray) -> T) =
+            if (!Files.exists(this)) null
+            else Files.readAllBytes(this).let(mapper)
 }

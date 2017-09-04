@@ -10,6 +10,6 @@ class UpdateChannelLastPostIDJob(
         private val repository: ChannelRepository,
         private val channel: Channel,
         private val lastPostId: Int
-) : Callable<Single<Boolean>> {
-    override fun call() = repository.updateLastPostId(channel.id, lastPostId).toSingle()
+) : Callable<Single<Channel>> {
+    override fun call() = repository.update(channel.copy(lastPostId = lastPostId)).toSingle()
 }

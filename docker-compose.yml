@@ -7,8 +7,6 @@ services:
       - ./bot:/code
       - ~/.telegram-channels-feed/bot:/data
     depends_on:
-      tg:
-        condition: service_healthy
       db:
         condition: service_healthy
     restart: unless-stopped
@@ -33,7 +31,7 @@ services:
       - JAVA_OPTS=-Xmx256M -Xms256M
     mem_limit: 512mb
     volumes:
-      - ~/.telegram-channels-feed/tg/tmp:/tmp
+      - ~/.telegram-channels-feed/tg:/tmp
     ports:
       - "8894:8894"
     depends_on:

@@ -18,9 +18,6 @@ def load() -> ConfigParser:
         },
         'rabbit': {
             'url': os.getenv('CF_RABBIT_URL')
-        },
-        'tg-cli': {
-            'url': os.getenv('CF_TGCLI_URL')
         }
     })
 
@@ -43,7 +40,6 @@ def extend(conf: ConfigParser) -> ConfigParser:
 def validate(conf: ConfigParser) -> ConfigParser:
     sections = {
         'bot': ['token'],
-        'tg-cli': ['url'],
         'db': ['url'],
         'rabbit': ['url']
     }

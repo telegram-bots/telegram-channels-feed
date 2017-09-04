@@ -16,9 +16,6 @@ def load() -> ConfigParser:
         'db': {
             'url': os.getenv('CF_DB_URL')
         },
-        'tg-cli': {
-            'url': os.getenv('CF_TGCLI_URL')
-        },
         'updates': {
             'mode': 'polling'
         }
@@ -43,7 +40,6 @@ def extend(conf: ConfigParser) -> ConfigParser:
 def validate(conf: ConfigParser) -> ConfigParser:
     sections = {
         'bot': ['token'],
-        'tg-cli': ['url'],
         'db': ['url'],
         'updates': ['mode']
     }
@@ -77,9 +73,7 @@ config = validate(extend(load()))
 
 # IOC
 from .db import DB
-from .tg_cli import TelegramCLI
 db = DB(config['db'])
-tg_cli = TelegramCLI(config['tg-cli'])
 
 from .repository import *
 user_repository = UserRepository()

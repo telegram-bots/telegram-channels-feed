@@ -40,9 +40,10 @@ class TGPostsUpdater(
         client.close()
     }
 
-    @Scheduled(fixedDelay = 60_000)
+    @Scheduled(fixedDelay = 1000)
     fun run() {
         iterateChannels()
+                .flatMap { resolve(it) }
                 .flatMap { download(it) }
                 .flatMap { prepare(it) }
                 .flatMap { process(it) }
@@ -58,16 +59,36 @@ class TGPostsUpdater(
     }
 
     private fun iterateChannels(): Observable<Channel> {
-        return Observable.fromCallable(IterateChannelsJob(repository, props.channelsBatchSize))
-                .flatMap { it }
+        return Observable
+                .interval(
+                        random.nextLong(props.postsIntervalMin, props.postsIntervalMax),
+                        props.postsIntervalTimeUnit
+                )
                 .zipWith(
-                        Observable.interval(
-                                random.nextLong(props.postsIntervalMin, props.postsIntervalMax),
-                                props.postsIntervalTimeUnit
-                        ),
-                        BiFunction<Channel, Long, Channel> { channel, _ -> channel }
+                        Observable.fromCallable(IterateChannelsJob(repository, props.channelsBatchSize)).flatMap { it },
+                        BiFunction<Long, Channel, Channel> { _, channel -> channel }
                 )
                 .doOnNext { logger.info { "Processing channel $it" } }
+    }
+
+    private fun resolve(channel: Channel): Observable<Channel> {
+        return Observable.just(channel)
+                .filter { it.isEmpty() }
+                .flatMap {
+                    Observable
+                            .interval(
+                                    random.nextLong(props.postsIntervalMin, props.postsIntervalMax),
+                                    props.postsIntervalTimeUnit
+                            )
+                            .zipWith(
+                                    Single.fromCallable(ResolveChannelJob(client, repository, it))
+                                            .flatMap { it }
+                                            .toObservable(),
+                                    BiFunction<Long, Channel, Channel> { _, channel -> channel }
+                            )
+                            .doOnNext { logger.info { "Resolved data for channel $it" } }
+                }
+                .defaultIfEmpty(channel)
     }
 
     private fun download(channel: Channel): Observable<Pair<Channel, List<TLMessage>>> {
@@ -75,12 +96,15 @@ class TGPostsUpdater(
                 .flatMap { it }
                 .toList()
                 .toObservable()
-                .doOnNext { logger.info { "Downloaded channel $channel posts ${it.size}" } }
+                .skipWhile { it.isEmpty() }
+                .doOnNext { logger.info { "Downloaded channel $channel ${it.size}x posts" } }
                 .map { channel to it }
     }
 
     private fun prepare(pair: Pair<Channel, List<TLMessage>>): Observable<RawPostData> {
-        return Observable.fromIterable(pair.second).map { RawPostData(it, pair.first) }
+        return Observable.fromIterable(pair.second)
+                .map { RawPostData(it, pair.first) }
+                .doOnSubscribe { logger.info { "Preparing channel ${pair.first} ${pair.second.size}x posts" } }
     }
 
     private fun process(data: RawPostData): Observable<Pair<RawPostData, ProcessedPostGroup>> {
@@ -97,7 +121,7 @@ class TGPostsUpdater(
                 .toObservable()
     }
 
-    private fun markDownloaded(data: RawPostData): Observable<Boolean> {
+    private fun markDownloaded(data: RawPostData): Observable<Channel> {
         return Single.fromCallable(UpdateChannelLastPostIDJob(repository, data.channel, data.raw.id))
                 .flatMap { it }
                 .toObservable()

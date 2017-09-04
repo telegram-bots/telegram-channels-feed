@@ -1,7 +1,6 @@
 package com.github.telegram_bots.channels_feed.tg.service.job
 
 import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPostGroup
-import io.reactivex.Observable
 import io.reactivex.Single
 import org.springframework.cloud.stream.messaging.Source
 import org.springframework.messaging.support.MessageBuilder

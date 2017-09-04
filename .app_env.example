@@ -4,4 +4,3 @@ CF_TG_API_ID=
 CF_TG_API_HASH=
 CF_DB_URL=postgresql://postgres@db:5432/postgres
 CF_RABBIT_URL=amqp://guest:guest@rabbit:5672/
-CF_TG_URL=http://tg:8894

@@ -16,9 +16,6 @@ spring:
           destination: channels_feed.posts
           content-type: application/json
 
-server:
-  port: 8894
-
 tg:
   api-id: ${CF_TG_API_ID}
   api-hash: ${CF_TG_API_HASH}
@@ -27,7 +24,7 @@ tg:
   app-version: ${VERSION}
   sys-version: ${VERSION}
   lang-code: en
-  storage-path: ${user.home}/.telegram-channels-feed/tg
+  storage-path: ${java.io.tmpdir}/tg
 
 processing:
   channels-batch-size: 10

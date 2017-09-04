@@ -1,23 +1,45 @@
 from typing import Optional
-
+from sqlalchemy.sql import text
 from src.config import db
 from src.domain.entities import Channel
 
 
 class ChannelRepository:
-    def get(self, url: str=None, telegram_id: int=None) -> Optional[Channel]:
-        """
-        Find channel by it's url
-        :param url: Searchable url of channel
-        :param telegram_id: Searchable telegram_id of channel
-        :return: Found channel or None
-        """
-        if url is None and telegram_id is None:
-            raise AttributeError("Both url and telegram_id is None")
+    def get(self, url: str) -> Optional[Channel]:
+        return db.session \
+            .query(Channel) \
+            .filter(Channel.url == url) \
+            .first()
 
-        query = db.session.query(Channel)
+    def get_or_create(self, url: str, name: str) -> Channel:
+        """
+        Creates channel or returns existing
+        :param url: URL of channel
+        :param name: Name of channel
+        :return: Existing or new channel
+        """
+        return db.session \
+            .query(Channel) \
+            .from_statement(text(
+                """
+                INSERT INTO Channels (url, name)
+                VALUES (:url, :name)
+                ON CONFLICT (url)
+                DO NOTHING;
+                SELECT *
+                FROM channels 
+                WHERE url = :url;
+                """
+            )) \
+            .params(url=url, name=name) \
+            .first()
 
-        if url is not None:
-            return query.filter(Channel.url == url).first()
-        elif telegram_id is not None:
-            return query.filter(Channel.telegram_id == telegram_id).first()
+    def remove(self, url: str):
+        """
+        Remove channel by it's url if exists
+        :param url: URL of channel
+        """
+        db.session \
+            .query(Channel) \
+            .filter(Channel.url == url) \
+            .delete()

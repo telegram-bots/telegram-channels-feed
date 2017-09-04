@@ -8,61 +8,36 @@ import java.sql.ResultSet
 
 @Repository
 class ChannelRepository(private val jdbc: JdbcTemplate) {
-    fun find(url: String): Channel? {
-        return jdbc
-                .query(
-                        "SELECT * FROM Channels WHERE url = ?",
-                        arrayOf(url.toLowerCase()),
-                        Mapper
-                )
-                .firstOrNull()
-    }
-
-    fun save(channel: Channel): Channel {
-        jdbc.update("""INSERT INTO Channels(telegram_id, hash, url, name, last_post_id, last_sent_id)
-            VALUES (?, ?, ?, ?, ?, ?)""",
+    fun update(channel: Channel): Channel {
+        jdbc.update(
+                """
+                | UPDATE Channels
+                | SET telegram_id = ?, hash = ?, url = ?, name = ?, last_post_id = ?
+                | WHERE id = ?
+                """.trimMargin(),
                 channel.telegramId,
                 channel.hash,
                 channel.url,
                 channel.name,
                 channel.lastPostId,
-                channel.lastSentId
+                channel.id
         )
 
-        return find(channel.url)!!
-    }
-
-    fun delete(channel: Channel): Boolean {
-        return jdbc.update(
-                "DELETE FROM Channels WHERE id = ?",
-                channel.id
-        ) >= 1
+        return channel
     }
 
     fun list(limit: Int, offset: Int): List<Channel> {
-        return jdbc
-                .query(
-                        "SELECT * FROM Channels LIMIT ? OFFSET ?",
-                        arrayOf(limit, offset),
-                        Mapper
-                )
-    }
-
-    fun updateLastPostId(id: Int, lastPostId: Int): Boolean {
-        return jdbc.update(
-                "UPDATE Channels SET last_post_id = ? WHERE id = ?",
-                lastPostId, id
-        ) >= 1
+        return jdbc.query("SELECT * FROM Channels LIMIT ? OFFSET ?", arrayOf(limit, offset), Mapper)
     }
 
     private object Mapper : RowMapper<Channel> {
         override fun mapRow(rs: ResultSet, rowNum: Int) = Channel(
                 id = rs.getInt("id"),
-                telegramId = rs.getInt("telegram_id"),
-                hash = rs.getLong("hash"),
+                telegramId = rs.getObject("telegram_id")?.let { it as? Int } ?: Channel.EMPTY_TG_ID,
+                hash = rs.getObject("hash")?.let { it as? Long } ?: Channel.EMPTY_HASH,
                 url = rs.getString("url"),
                 name = rs.getString("name"),
-                lastPostId = rs.getInt("last_post_id"),
+                lastPostId = rs.getObject("last_post_id")?.let { it as? Int } ?: Channel.EMPTY_LAST_POST_ID,
                 lastSentId = rs.getObject("last_sent_id")?.let { it as? Int }
         )
     }

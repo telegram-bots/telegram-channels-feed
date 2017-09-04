@@ -6,7 +6,6 @@ import com.github.badoualy.telegram.tl.exception.RpcErrorException
 import com.github.telegram_bots.channels_feed.tg.config.properties.TGProperties
 import mu.KLogging
 import org.springframework.stereotype.Service
-import java.io.IOException
 import java.util.*
 import javax.annotation.PostConstruct
 
@@ -18,9 +17,7 @@ class TGAuthorizer(
     companion object : KLogging()
 
     @PostConstruct
-    fun init() {
-        authorize()
-    }
+    fun init() = authorize()
 
     fun authorize() {
         try {
@@ -29,9 +26,7 @@ class TGAuthorizer(
             signIn(sentCode = sendAuthCode(), typedCode = getTypedAuthCode())
                     .let(this::getAuthStatus)
                     .let(logger::info)
-        } catch (e: RpcErrorException) {
-            onError(e)
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             onError(e)
         }
     }
@@ -41,8 +36,7 @@ class TGAuthorizer(
             client.accountGetAuthorizations()
             true
         } catch (e: RpcErrorException) {
-            if (e.tag.equals("AUTH_KEY_UNREGISTERED", true))
-                return false
+            if (e.tag.equals("AUTH_KEY_UNREGISTERED", true)) false
             else throw e
         }
     }
@@ -56,27 +50,18 @@ class TGAuthorizer(
         }
     }
 
-    private fun sendAuthCode(): String {
-        return client.authSendCode(false, props.phoneNumber, true).phoneCodeHash
-    }
+    private fun sendAuthCode() = client.authSendCode(false, props.phoneNumber, true)
+            .phoneCodeHash
 
-    private fun getTypedAuthCode(): String {
-        logger.info { "Enter authentication code: " }
-        return Scanner(System.`in`).nextLine()
-    }
+    private fun getTypedAuthCode() = logger.info { "Enter authentication code: " }
+            .run { Scanner(System.`in`).nextLine() }
 
-    private fun getTypedTwoStepAuthCode(): String {
-        logger.info { "Enter two-step auth password: " }
-        return Scanner(System.`in`).nextLine()
-    }
+    private fun getTypedTwoStepAuthCode() = logger.info { "Enter two-step auth password: " }
+            .run { Scanner(System.`in`).nextLine() }
 
-    private fun getAuthStatus(auth: TLAuthorization): String {
-        val user = auth.user.asUser
-        return "You are now signed in as ${user.firstName} ${user.lastName} @${user.username}"
-    }
+    private fun getAuthStatus(auth: TLAuthorization)= auth.user.asUser
+            .run { "You are now signed in as $firstName $lastName @$username" }
 
-    private fun onError(throwable: Throwable) {
-        logger.error("Failed to authorize", throwable)
-        throw throwable
-    }
+    private fun onError(throwable: Throwable) = logger.error("Failed to authorize", throwable)
+            .also { throw throwable }
 }

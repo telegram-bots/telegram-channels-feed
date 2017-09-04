@@ -28,11 +28,10 @@ dependencyManagement {
 dependencies {
     compile("org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.4-3")
 
-    // Web
-    compile("org.springframework.boot:spring-boot-starter-web")
-
     // Rabbit
-    compile("org.springframework.cloud:spring-cloud-starter-stream-rabbit")
+    compile("org.springframework.cloud:spring-cloud-starter-stream-rabbit") {
+        exclude module: 'spring-boot-starter-web'
+    }
 
     // Telegram
     compile("com.github.badoualy:kotlogram:65c96ce") {
@@ -41,7 +40,6 @@ dependencies {
 
     // Jackson
     compile("com.fasterxml.jackson.module:jackson-module-kotlin:2.8.9")
-    compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.9")
 
     // Rx
     compile("io.reactivex.rxjava2:rxkotlin:2.1.0")

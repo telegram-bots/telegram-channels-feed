@@ -3,7 +3,7 @@ import logging
 from sqlalchemy.exc import IntegrityError
 from typing import List
 
-from src.config import db, tg_cli, user_repository, channel_repository, subscription_repository
+from src.config import db, channel_repository, user_repository, subscription_repository
 from src.domain.command import Command
 from src.domain.entities import Channel
 from src.exception.subscription_exception import *
@@ -26,19 +26,8 @@ class Subscriptions:
             raise IllegalChannelUrlError()
 
         def callback():
-            user = user_repository.get_or_create(telegram_id=command.chat_id)
-
-            channel = channel_repository.get(url=command.channel_url)
-            if channel is None:
-                pass
-                # telegram_id, name = tg_cli.lookup_channel(command.channel_url)
-                # tg_cli.subscribe_to_channel(telegram_id)
-                # channel = channel_repository.create_or_update(
-                #     telegram_id=telegram_id,
-                #     url=command.channel_url,
-                #     name=name
-                # )
-
+            user = user_repository.get_or_create(command.chat_id)
+            channel = channel_repository.get_or_create(url=command.channel_url, name=command.channel_name)
             subscription_repository.create(user_id=user.id, channel_id=channel.id)
 
             return channel
@@ -61,20 +50,17 @@ class Subscriptions:
             raise IllegalChannelUrlError()
 
         def callback():
-            user = user_repository.get(telegram_id=command.chat_id)
+            user = user_repository.get(command.chat_id)
             if user is None:
                 raise NotSubscribedError()
 
-            channel = channel_repository.get(url=command.channel_url)
+            channel = channel_repository.get(command.channel_url)
             if channel is None:
                 raise NotSubscribedError()
 
             subs_left = subscription_repository.remove(user_id=user.id, channel_id=channel.id)
             if subs_left == 0:
-                pass
-                # tg_cli.lookup_channel(channel.url)
-                # tg_cli.unsubscribe_from_channel(channel.telegram_id)
-                # channel_repository.remove(channel.url)
+                channel_repository.remove(command.channel_url)
 
             return channel
 
@@ -93,7 +79,7 @@ class Subscriptions:
         :return: List of channels user subscribed to
         """
         try:
-            return subscription_repository.list(user_telegram_id=command.chat_id)
+            return subscription_repository.list(command.chat_id)
         except Exception as e:
             logging.error(f"Failed to list subscriptions: {e}")
             raise SubscriptionsListError()

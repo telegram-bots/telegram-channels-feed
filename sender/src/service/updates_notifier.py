@@ -1,12 +1,11 @@
 import logging
 import json
 from threading import Thread
-from urllib.parse import urlparse
 
 from retry.api import retry_call
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
-from src.config import config, encoding
+from src.config import encoding
 from src.domain.entities import User
 from src.domain.post import Post, PostGroup
 
@@ -15,7 +14,6 @@ class UpdatesNotifier:
     def __init__(self, notifications, queue_consumer):
         self.notifications = notifications
         self.queue_consumer = queue_consumer
-        self.tg_cli_user = urlparse(config['tg-cli']['url']).username
         self.bot = None
 
     def instance(self, bot):

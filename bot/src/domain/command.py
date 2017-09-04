@@ -7,13 +7,14 @@ class Command:
     """
     Special class for message which contains command
     """
-    def __init__(self, message):
+    def __init__(self, message, channel_url, channel_name, args):
         self.chat_id = message.chat.id
         self.chat_type = message.chat.type
         self.message = message
         self.name = Command.parse_name(message)
-        self.args = Command.parse_args(message)
-        self.channel_url = Command.parse_channel_url(self.args)
+        self.channel_url = channel_url
+        self.channel_name = channel_name
+        self.args = args
 
     def is_private(self) -> bool:
         """Returns True if chat type is private.
