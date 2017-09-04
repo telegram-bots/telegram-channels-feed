@@ -12,7 +12,7 @@ class ChannelRepository(private val jdbc: JdbcTemplate) {
         return jdbc
                 .query(
                         "SELECT * FROM Channels WHERE url = ?",
-                        arrayOf(url),
+                        arrayOf(url.toLowerCase()),
                         Mapper
                 )
                 .firstOrNull()

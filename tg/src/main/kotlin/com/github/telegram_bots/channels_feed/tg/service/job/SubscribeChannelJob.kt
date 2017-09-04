@@ -31,13 +31,13 @@ class SubscribeChannelJob(
         return client.contactsResolveUsername(channelUrl)
                 .chats
                 ?.mapNotNull { it as? TLChannel }
-                ?.find { it.username == channelUrl }
+                ?.find { channelUrl.equals(it.username, true) }
                 ?.let {
                     Channel(
                             id = -1,
                             telegramId = it.id,
                             hash = it.accessHash,
-                            url = it.username,
+                            url = it.username.toLowerCase(),
                             name = it.title,
                             lastPostId = -1,
                             lastSentId = null

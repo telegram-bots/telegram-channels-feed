@@ -65,10 +65,10 @@ class TGPostsUpdater(
         return Observable.fromCallable(IterateChannelsJob(repository, 10))
                 .flatMap { it }
                 .zipWith(
-                        Observable.interval(random.nextLong(60, 120), TimeUnit.SECONDS),
+                        Observable.interval(random.nextLong(30, 120), TimeUnit.SECONDS),
                         BiFunction<Channel, Long, Channel> { channel, _ -> channel }
                 )
-                .doOnNext { logger.info { "Iterating channel $it" } }
+                .doOnNext { logger.info { "Processing channel $it" } }
     }
 
     private fun download(channel: Channel): Observable<Pair<Channel, List<TLMessage>>> {
