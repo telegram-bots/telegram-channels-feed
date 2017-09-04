@@ -2,6 +2,8 @@ package com.github.telegram_bots.channels_feed.tg.service.job
 
 import com.github.badoualy.telegram.api.TelegramClient
 import com.github.badoualy.telegram.tl.api.TLChannel
+import com.github.badoualy.telegram.tl.api.TLInputPeerChannel
+import com.github.badoualy.telegram.tl.api.TLMessage
 import com.github.telegram_bots.channels_feed.tg.domain.Channel
 import com.github.telegram_bots.channels_feed.tg.service.ChannelRepository
 import io.reactivex.Single
@@ -45,10 +47,27 @@ class SubscribeChannelJob(
     }
 
     private fun resolveLastPostId(channel: Channel): Channel {
-        TODO("IMPLEMENT")
+        val lastPostId = client
+                .messagesGetHistory(
+                        TLInputPeerChannel(channel.telegramId, channel.hash),
+                        0,
+                        0,
+                        0,
+                        1,
+                        -1,
+                        1
+                )
+                .messages
+                ?.firstOrNull()
+                ?.id
+                ?: throw FailedToResolveLastPostIdException(channel)
+
+        return channel.copy(lastPostId = lastPostId)
     }
 
     private fun save(channel: Channel) = repository.save(channel)
+
+    class FailedToResolveLastPostIdException(channel: Channel) : RuntimeException("Failed to resolve lastPostId $channel")
 
     class NoSuchChannelException(channelLink: String) : RuntimeException("No such channel $channelLink")
 }

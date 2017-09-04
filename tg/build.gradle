@@ -1,7 +1,7 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.1.4-2"
-    id "org.jetbrains.kotlin.plugin.spring" version "1.1.4-2"
-    id "org.jetbrains.kotlin.plugin.noarg" version "1.1.4-2"
+    id "org.jetbrains.kotlin.jvm" version "1.1.4-3"
+    id "org.jetbrains.kotlin.plugin.spring" version "1.1.4-3"
+    id "org.jetbrains.kotlin.plugin.noarg" version "1.1.4-3"
     id "org.springframework.boot" version "1.5.6.RELEASE"
 }
 
@@ -21,12 +21,12 @@ noArg {
 
 dependencyManagement {
     imports {
-        mavenBom "org.springframework.cloud:spring-cloud-dependencies:Dalston.SR2"
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:Dalston.SR3"
     }
 }
 
 dependencies {
-    compile("org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.4-2")
+    compile("org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.4-3")
 
     // Web
     compile("org.springframework.boot:spring-boot-starter-web")
