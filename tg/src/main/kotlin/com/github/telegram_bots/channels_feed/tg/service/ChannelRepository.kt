@@ -27,7 +27,11 @@ class ChannelRepository(private val jdbc: JdbcTemplate) {
     }
 
     fun list(limit: Int, offset: Int): List<Channel> {
-        return jdbc.query("SELECT * FROM Channels LIMIT ? OFFSET ?", arrayOf(limit, offset), Mapper)
+        return jdbc.query(
+                "SELECT * FROM Channels ORDER BY last_post_id DESC LIMIT ? OFFSET ?",
+                arrayOf(limit, offset),
+                Mapper
+        )
     }
 
     private object Mapper : RowMapper<Channel> {

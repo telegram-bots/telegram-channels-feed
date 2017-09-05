@@ -59,14 +59,14 @@ class TGPostsUpdater(
     }
 
     private fun iterateChannels(): Observable<Channel> {
-        return Observable
-                .interval(
-                        random.nextLong(props.postsIntervalMin, props.postsIntervalMax),
-                        props.postsIntervalTimeUnit
-                )
+        return Observable.fromCallable(IterateChannelsJob(repository, props.channelsBatchSize))
+                .flatMap { it }
                 .zipWith(
-                        Observable.fromCallable(IterateChannelsJob(repository, props.channelsBatchSize)).flatMap { it },
-                        BiFunction<Long, Channel, Channel> { _, channel -> channel }
+                        Observable.interval(
+                                random.nextLong(props.postsIntervalMin, props.postsIntervalMax),
+                                props.postsIntervalTimeUnit
+                        ),
+                        BiFunction<Channel, Long, Channel> { channel, _ -> channel }
                 )
                 .doOnNext { logger.info { "Processing channel $it" } }
     }
@@ -75,16 +75,15 @@ class TGPostsUpdater(
         return Observable.just(channel)
                 .filter { it.isEmpty() }
                 .flatMap {
-                    Observable
-                            .interval(
-                                    random.nextLong(props.postsIntervalMin, props.postsIntervalMax),
-                                    props.postsIntervalTimeUnit
-                            )
+                    Single.fromCallable(ResolveChannelJob(client, repository, it))
+                            .flatMap { it }
+                            .toObservable()
                             .zipWith(
-                                    Single.fromCallable(ResolveChannelJob(client, repository, it))
-                                            .flatMap { it }
-                                            .toObservable(),
-                                    BiFunction<Long, Channel, Channel> { _, channel -> channel }
+                                    Observable.interval(
+                                            random.nextLong(props.postsIntervalMin, props.postsIntervalMax),
+                                            props.postsIntervalTimeUnit
+                                    ),
+                                    BiFunction<Channel, Long, Channel> { channel, _ -> channel }
                             )
                             .doOnNext { logger.info { "Resolved data for channel $it" } }
                 }

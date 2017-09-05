@@ -30,5 +30,5 @@ processing:
   channels-batch-size: 10
   posts-batch-size: 50
   posts-interval-min: 10
-  posts-interval-max: 120
+  posts-interval-max: 60
   posts-interval-time-unit: SECONDS
