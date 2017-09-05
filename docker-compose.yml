@@ -32,8 +32,6 @@ services:
     mem_limit: 512mb
     volumes:
       - ~/.telegram-channels-feed/tg:/tmp
-    ports:
-      - "8894:8894"
     depends_on:
       db:
         condition: service_healthy

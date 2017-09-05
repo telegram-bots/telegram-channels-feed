@@ -1,7 +1,7 @@
 from sqlalchemy.sql import text
 from typing import List
 
-from src.config import db
+from src.component.config import db
 from src.domain.entities import Subscription, Channel
 
 
@@ -60,7 +60,7 @@ class SubscriptionRepository:
             .query(Channel) \
             .from_statement(text(
                 """
-                SELECT ch.id, ch.telegram_id, ch.url, ch.name, ch.last_message_id
+                SELECT ch.id, ch.telegram_id, ch.url, ch.name, ch.last_post_id
                 FROM Subscriptions AS sub
                 JOIN Users AS u ON u.id = sub.user_id
                 JOIN Channels AS ch ON ch.id = sub.channel_id

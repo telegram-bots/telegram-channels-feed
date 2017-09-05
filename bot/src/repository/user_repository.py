@@ -1,7 +1,7 @@
 from sqlalchemy.sql import text
 from typing import Optional
 
-from src.config import db
+from src.component.config import db
 from src.domain.entities import User
 
 

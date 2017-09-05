@@ -2,6 +2,7 @@ import logging
 
 from telegram import Update
 from telegram.ext import Handler
+from telegram.ext.dispatcher import run_async
 from typing import Tuple, Optional, List
 
 from src.domain.command import Command
@@ -26,6 +27,7 @@ class CommandHandler(Handler):
 
         return self.callback(dispatcher.bot, update, **optional_args)
 
+    @run_async
     def handle(self, bot, update):
         info = self.get_info(bot=bot, message=update.message)
         data = Command(update.message, *info)
@@ -37,14 +39,16 @@ class CommandHandler(Handler):
                 command.bot = bot
             command.execute(data)
         except (KeyError, IndexError, ValueError):
-            bot.send_message(chat_id=data.chat_id,
-                             reply_to_message_id=data.message.message_id,
-                             text='Invalid command! Type /help')
+            bot.send_message(
+                chat_id=data.chat_id,
+                reply_to_message_id=data.message.message_id,
+                text='Invalid command! Type /help'
+            )
 
     def get_info(self, bot, message) -> Tuple[Optional[str], Optional[str], List[str]]:
         args = Command.parse_args(message)
         url = Command.parse_channel_url(args)
-        info = bot.get_chat(f"@${url}") if url is not None else None
+        info = bot.get_chat(f"@{url}") if url is not None else None
 
         if info is not None and info.type == 'channel':
             return info.username, info.title, args

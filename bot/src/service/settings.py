@@ -1,6 +1,6 @@
 import logging
 
-from src.config import db, user_repository, subscription_repository
+from src.component.config import db, user_repository, subscription_repository
 from src.domain.command import Command
 from src.exception.settings_exception import *
 
@@ -20,14 +20,14 @@ class Settings:
             if has_subscription:
                 raise RedirectNotAllowed()
 
-            user_repository.change_settings(user_id=user.id, redirect_url=f"@{command.channel_url}")
+            user_repository.change_settings(user_id=user.id, redirect_url=command.channel_url)
 
         try:
             db.execute_in_transaction(callback)
         except GenericSettingsError:
             raise
         except Exception as e:
-            logging.error(f"Failed to add redirect: {e}")
+            logging.exception("Failed to add redirect")
             raise RedirectChangeError("Failed to add redirect")
 
     def remove_channel_redirect(self, command: Command):
@@ -43,5 +43,5 @@ class Settings:
         except GenericSettingsError:
             raise
         except Exception as e:
-            logging.error(f"Failed to remove redirect: {e}")
+            logging.exception("Failed to remove redirect")
             raise RedirectChangeError("Failed to remove redirect")

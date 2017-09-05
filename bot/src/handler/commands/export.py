@@ -4,7 +4,7 @@ import os
 import os.path
 from typing import List
 
-from src.config import subscriptions
+from src.component.config import subscriptions
 from src.domain.entities import Channel
 from . import Base
 
@@ -19,9 +19,11 @@ class Export(Base):
             self.reply(command, "You don't have active subscriptions.")
 
         path = os.path.join(os.sep, 'data', 'files', f"{command.chat_id}_export.csv")
-        self.__create_csv(path, subscriptions.list(command))
-        self.bot.send_document(chat_id=command.chat_id,
-                               document=open(path, 'rb'))
+        self.__create_csv(path, rows)
+        self.bot.send_document(
+            chat_id=command.chat_id,
+            document=open(path, 'rb')
+        )
         os.remove(path)
 
     @staticmethod

@@ -1,6 +1,6 @@
 from typing import Optional
 from sqlalchemy.sql import text
-from src.config import db
+from src.component.config import db
 from src.domain.entities import Channel
 
 

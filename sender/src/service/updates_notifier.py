@@ -36,7 +36,7 @@ class UpdatesNotifier:
             ]])
 
         def get_args(group: PostGroup, post: Post, user: User):
-            chat_id = user.telegram_id if user.redirect_url is None else user.redirect_url
+            chat_id = user.telegram_id if user.redirect_url is None else f"@{user.redirect_url}"
 
             if post.mode == "AS_IS":
                 args = {

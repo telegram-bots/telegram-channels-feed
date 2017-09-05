@@ -3,7 +3,7 @@ import logging
 from sqlalchemy.exc import IntegrityError
 from typing import List
 
-from src.config import db, channel_repository, user_repository, subscription_repository
+from src.component.config import db, channel_repository, user_repository, subscription_repository
 from src.domain.command import Command
 from src.domain.entities import Channel
 from src.exception.subscription_exception import *

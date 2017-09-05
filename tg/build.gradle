@@ -53,7 +53,7 @@ dependencies {
 
     runtime("org.springframework.boot:spring-boot-devtools")
 
-    compileOnly("org.springframework.boot:spring-boot-configuration-processor")
+    kapt("org.springframework.boot:spring-boot-configuration-processor")
 
     testCompile("org.springframework.boot:spring-boot-starter-test")
 }

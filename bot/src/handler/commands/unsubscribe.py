@@ -1,4 +1,4 @@
-from src.config import subscriptions
+from src.component.config import subscriptions
 from src.exception.subscription_exception import GenericSubscriptionError
 from . import Base
 

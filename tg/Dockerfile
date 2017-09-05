@@ -6,5 +6,4 @@ RUN mkdir /code/
 WORKDIR /code
 ADD . /code/
 RUN ./gradlew --no-daemon clean build && rm -rf $HOME/.gradle
-HEALTHCHECK CMD curl -v --fail http://localhost:8994/ || exit 1
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar build/libs/tg-$VERSION.jar"]

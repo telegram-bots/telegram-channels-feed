@@ -1,4 +1,4 @@
-from src.config import settings
+from src.component.config import settings
 from src.exception.settings_exception import *
 from telegram.error import Unauthorized
 from . import Base

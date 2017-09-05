@@ -8,6 +8,8 @@ import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPostGroup
 import com.github.telegram_bots.channels_feed.tg.domain.RawPostData
 import com.github.telegram_bots.channels_feed.tg.service.job.*
 import com.github.telegram_bots.channels_feed.tg.service.processor.PostProcessor
+import com.github.telegram_bots.channels_feed.tg.util.XObservable
+import com.github.telegram_bots.channels_feed.tg.util.toExtended
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
@@ -31,7 +33,6 @@ class TGPostsUpdater(
 ) {
     companion object : KLogging()
 
-    private val random: ThreadLocalRandom = ThreadLocalRandom.current()
     private var disposable: Disposable? = null
 
     @PreDestroy
@@ -61,13 +62,13 @@ class TGPostsUpdater(
     private fun iterateChannels(): Observable<Channel> {
         return Observable.fromCallable(IterateChannelsJob(repository, props.channelsBatchSize))
                 .flatMap { it }
-                .zipWith(
-                        Observable.interval(
-                                random.nextLong(props.postsIntervalMin, props.postsIntervalMax),
-                                props.postsIntervalTimeUnit
-                        ),
-                        BiFunction<Channel, Long, Channel> { channel, _ -> channel }
-                )
+                .concatMap {
+                    Observable.just(it).toExtended().randomDelay(
+                            props.postsIntervalMin,
+                            props.postsIntervalMax,
+                            props.postsIntervalTimeUnit
+                    )
+                }
                 .doOnNext { logger.info { "Processing channel $it" } }
     }
 
@@ -78,13 +79,13 @@ class TGPostsUpdater(
                     Single.fromCallable(ResolveChannelJob(client, repository, it))
                             .flatMap { it }
                             .toObservable()
-                            .zipWith(
-                                    Observable.interval(
-                                            random.nextLong(props.postsIntervalMin, props.postsIntervalMax),
-                                            props.postsIntervalTimeUnit
-                                    ),
-                                    BiFunction<Channel, Long, Channel> { channel, _ -> channel }
-                            )
+                            .concatMap {
+                                Observable.just(it).toExtended().randomDelay(
+                                        props.postsIntervalMin,
+                                        props.postsIntervalMax,
+                                        props.postsIntervalTimeUnit
+                                )
+                            }
                             .doOnNext { logger.info { "Resolved data for channel $it" } }
                 }
                 .defaultIfEmpty(channel)

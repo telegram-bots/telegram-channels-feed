@@ -1,9 +1,7 @@
-import logging
+from typing import Any, Generator
 
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.sql import text
-from typing import Any, Generator
 
 from src.domain.entities import *
 
@@ -17,14 +15,6 @@ class DB:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.session.close()
         self.engine.dispose()
-
-    def init(self):
-        logging.info("[db] IMPORTING SCHEMA")
-        schema_file = 'resources/sql/schema.sql'
-        with open(schema_file, 'r') as file:
-            self.session.execute(text(file.read()))
-            self.session.commit()
-        logging.info("[db] SUCCESSFULLY IMPORTED")
 
     def session(self) -> Session:
         return self.session
