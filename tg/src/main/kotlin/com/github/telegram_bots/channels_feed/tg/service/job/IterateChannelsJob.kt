@@ -15,8 +15,9 @@ class IterateChannelsJob(
     override fun call(): Observable<Channel> {
         return Observable.range(0, Int.MAX_VALUE - batchSize - 1)
                 .map { step.getAndAdd(batchSize) }
+                .doOnNext { println(it) }
                 .map { repository.list(batchSize, it) }
-                .takeUntil { it.isNotEmpty() }
+                .takeWhile { it.isNotEmpty() }
                 .flatMap { Observable.fromIterable(it) }
     }
 }
