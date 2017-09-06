@@ -10,10 +10,7 @@ import java.util.*
 import javax.annotation.PostConstruct
 
 @Service
-class TGAuthorizer(
-        private val props: TGProperties,
-        private val client: TelegramClient
-) {
+class TGAuthorizer(private val props: TGProperties, private val client: TelegramClient) {
     companion object : KLogging()
 
     @PostConstruct

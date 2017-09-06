@@ -24,7 +24,7 @@ tg:
   app-version: ${VERSION}
   sys-version: ${VERSION}
   lang-code: en
-  storage-path: ${java.io.tmpdir}/tg
+  storage-path: ${java.io.tmpdir}
 
 processing:
   channels-batch-size: 10

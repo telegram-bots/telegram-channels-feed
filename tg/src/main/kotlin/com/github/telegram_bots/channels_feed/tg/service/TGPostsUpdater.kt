@@ -8,18 +8,15 @@ import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPostGroup
 import com.github.telegram_bots.channels_feed.tg.domain.RawPostData
 import com.github.telegram_bots.channels_feed.tg.service.job.*
 import com.github.telegram_bots.channels_feed.tg.service.processor.PostProcessor
-import com.github.telegram_bots.channels_feed.tg.util.XObservable
 import com.github.telegram_bots.channels_feed.tg.util.toExtended
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
-import io.reactivex.functions.BiFunction
 import mu.KLogging
 import org.springframework.cloud.stream.annotation.EnableBinding
 import org.springframework.cloud.stream.messaging.Source
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import java.util.concurrent.ThreadLocalRandom
 import javax.annotation.PreDestroy
 
 @Service
@@ -55,9 +52,7 @@ class TGPostsUpdater(
                 .blockingSubscribe()
     }
 
-    private fun onError(throwable: Throwable) {
-        logger.error("Channels update error", throwable)
-    }
+    private fun onError(throwable: Throwable) = logger.error("[ERROR]", throwable)
 
     private fun iterateChannels(): Observable<Channel> {
         return Observable.fromCallable(IterateChannelsJob(repository, props.channelsBatchSize))
@@ -69,7 +64,7 @@ class TGPostsUpdater(
                             props.postsIntervalTimeUnit
                     )
                 }
-                .doOnNext { logger.info { "Processing channel $it" } }
+                .doOnNext { logger.info { "[PROCESS CHANNEL] $it" } }
     }
 
     private fun resolve(channel: Channel): Observable<Channel> {
@@ -86,7 +81,7 @@ class TGPostsUpdater(
                                         props.postsIntervalTimeUnit
                                 )
                             }
-                            .doOnNext { logger.info { "Resolved data for channel $it" } }
+                            .doOnNext { logger.info { "[RESOLVE CHANNEL] $it" } }
                 }
                 .defaultIfEmpty(channel)
     }
@@ -97,14 +92,14 @@ class TGPostsUpdater(
                 .toList()
                 .toObservable()
                 .skipWhile { it.isEmpty() }
-                .doOnNext { logger.info { "Downloaded channel $channel ${it.size}x posts" } }
+                .doOnNext { logger.info { "[DOWNLOAD POSTS] ${it.size}x $channel" } }
                 .map { channel to it }
     }
 
     private fun prepare(pair: Pair<Channel, List<TLMessage>>): Observable<RawPostData> {
         return Observable.fromIterable(pair.second)
                 .map { RawPostData(it, pair.first) }
-                .doOnSubscribe { logger.info { "Preparing channel ${pair.first} ${pair.second.size}x posts" } }
+                .doOnSubscribe { logger.info { "[PREPARE POSTS] ${pair.second.size}x ${pair.first}" } }
     }
 
     private fun process(data: RawPostData): Observable<Pair<RawPostData, ProcessedPostGroup>> {
@@ -112,6 +107,7 @@ class TGPostsUpdater(
                 .flatMap { it }
                 .map { data to it }
                 .toObservable()
+                .doOnNext { logger.trace { "[PROCESS POST] $data" } }
     }
 
     private fun sendToQueue(pair: Pair<RawPostData, ProcessedPostGroup>): Observable<RawPostData> {
@@ -119,12 +115,14 @@ class TGPostsUpdater(
                 .flatMap { it }
                 .map { pair.first }
                 .toObservable()
+                .doOnNext { logger.trace { "[SEND TO QUEUE] ${pair.second}" } }
     }
 
     private fun markDownloaded(data: RawPostData): Observable<Channel> {
         return Single.fromCallable(UpdateChannelLastPostIDJob(repository, data.channel, data.raw.id))
                 .flatMap { it }
                 .toObservable()
+                .doOnNext { logger.trace { "[MARK DOWNLOADED] $data" } }
     }
 }
 
