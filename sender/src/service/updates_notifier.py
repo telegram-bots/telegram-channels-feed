@@ -5,7 +5,7 @@ from threading import Thread
 from retry.api import retry_call
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
-from src.config import encoding
+from src.component.config import encoding
 from src.domain.entities import User
 from src.domain.post import Post, PostGroup
 
@@ -88,7 +88,7 @@ class UpdatesNotifier:
         has_errors = False
         group = PostGroup(json.loads(body, encoding=encoding))
 
-        for notify in self.notifications.list_not_notified(group.channel_id, group.post_id, False):
+        for notify in self.notifications.list_not_notified(group.channel_id, group.post_id):
             try:
                 user = notify.user
                 post = group.posts['FULL']  # User settings

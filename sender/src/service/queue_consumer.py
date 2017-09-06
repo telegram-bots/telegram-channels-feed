@@ -4,24 +4,19 @@ import pika
 
 
 class QueueConsumer:
-    EXCHANGE_NAME = 'channels_feed.posts'
-    QUEUE_NAME = 'channels_feed.posts.posts'
-    EXCHANGE_TYPE = 'topic'
-    ROUTING_KEY = '#'
     DURABLE = True
 
     def __init__(self, config):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
 
-        :param str url: The AMQP url to connect with
-
         """
+        self.config = config
         self.connection = None
         self.channel = None
         self.closing = False
         self.consumer_tag = None
-        self.url = config['url']
+        self.on_message_callback = None
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
@@ -62,8 +57,8 @@ class QueueConsumer:
         :rtype: pika.SelectConnection
 
         """
-        logging.info(f"Connecting to {self.url}")
-        return pika.SelectConnection(pika.URLParameters(self.url),
+        logging.info(f"Connecting to {self.config['url']}")
+        return pika.SelectConnection(pika.URLParameters(self.config['url']),
                                      self.on_connection_open,
                                      stop_ioloop_on_close=False)
 
@@ -94,7 +89,7 @@ class QueueConsumer:
         logging.debug('Issuing consumer related RPC commands')
         self.consumer_tag = self.channel.basic_consume(
             self.on_message_callback,
-            self.QUEUE_NAME
+            self.config['queue']
         )
 
     def on_connection_open(self, connection):
@@ -138,12 +133,16 @@ class QueueConsumer:
         logging.debug('Channel opened')
         self.channel = channel
         self.channel.add_on_close_callback(lambda c, rc, rt: self.connection.close())
-        logging.debug(f"Declaring exchange {self.EXCHANGE_NAME}")
+        logging.debug(f"Declaring exchange {self.config['exchange']}")
         self.channel.exchange_declare(
-            lambda frame: self.channel.queue_declare(self.on_queue_declareok, self.QUEUE_NAME, durable=self.DURABLE),
-            self.EXCHANGE_NAME,
-            self.EXCHANGE_TYPE,
-            durable=self.DURABLE
+            lambda frame: self.channel.queue_declare(
+                self.on_queue_declareok,
+                self.config['queue'],
+                durable=self.config['durable']
+            ),
+            self.config['exchange'],
+            self.config['type'],
+            durable=self.config['durable']
         )
 
     def on_queue_declareok(self, method_frame):
@@ -155,10 +154,10 @@ class QueueConsumer:
 
         :param pika.frame.Method method_frame: The Queue.DeclareOk frame
         """
-        logging.debug(f"Binding {self.EXCHANGE_NAME} to {self.QUEUE_NAME} with {self.ROUTING_KEY}")
+        logging.debug(f"Binding {self.config['exchange']} to {self.config['queue']} with {self.config['routing_key']}")
         self.channel.queue_bind(
             lambda q: self.start_consuming(),
-            self.QUEUE_NAME,
-            self.EXCHANGE_NAME,
-            self.ROUTING_KEY
+            self.config['queue'],
+            self.config['exchange'],
+            self.config['routing_key']
         )

@@ -58,6 +58,10 @@ class Subscriptions:
             if channel is None:
                 raise NotSubscribedError()
 
+            has_sub = subscription_repository.has(user_id=user.id, channel_id=channel.id)
+            if not has_sub:
+                raise NotSubscribedError()
+
             subs_left = subscription_repository.remove(user_id=user.id, channel_id=channel.id)
             if subs_left == 0:
                 channel_repository.remove(command.channel_url)
@@ -79,7 +83,11 @@ class Subscriptions:
         :return: List of channels user subscribed to
         """
         try:
-            return subscription_repository.list(command.chat_id)
-        except Exception as e:
-            logging.error(f"Failed to list subscriptions: {e}")
+            user = user_repository.get(command.chat_id)
+            if user is None:
+                return []
+
+            return subscription_repository.list(user.id)
+        except:
+            logging.exception("Failed to list subscriptions")
             raise SubscriptionsListError()

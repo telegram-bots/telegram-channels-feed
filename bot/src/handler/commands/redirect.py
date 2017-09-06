@@ -15,11 +15,11 @@ class Redirect(Base):
 
         try:
             if command.channel_url is None:
-                settings.remove_channel_redirect(command)
+                settings.remove_redirect(command)
                 self.reply(command, f"Successfully removed redirect")
             else:
                 self.__try_post_message(command)
-                settings.add_channel_redirect(command)
+                settings.add_redirect(command)
                 self.reply(command, f"Successfully added redirect to @{command.channel_url})")
         except GenericSettingsError as e:
             self.reply(command, str(e))
