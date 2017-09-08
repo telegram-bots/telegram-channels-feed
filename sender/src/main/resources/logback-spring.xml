@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <include resource="org/springframework/boot/logging/logback/base.xml"/>
-    <property name="LOG_FILE" value="${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}/}log-channels-feed-tg.log"/>
+    <property name="LOG_FILE" value="${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}/}log-channels-feed-sender.log"/>
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.springframework.amqp.rabbit.listener" level="ERROR" />
     <logger name="org.davidmoten.rx.jdbc" level="WARN"/>
-    <logger name="com.github.badoualy.telegram" level="ERROR"/>
     <logger name="com.github.telegram_bots" level="DEBUG"/>
     <root level="WARN">
         <appender-ref ref="FILE" />

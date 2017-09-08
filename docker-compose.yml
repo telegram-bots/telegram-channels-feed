@@ -14,9 +14,11 @@ services:
   sender:
     build: ./sender
     env_file: .app_env
+    environment:
+      - JAVA_OPTS=-Xmx256M -Xms256M
+    mem_limit: 512mb
     volumes:
-      - ./sender:/code
-      - ~/.telegram-channels-feed/sender:/data
+      - ~/.telegram-channels-feed/sender:/tmp
     depends_on:
       db:
         condition: service_healthy

@@ -2,21 +2,32 @@ package com.github.telegram_bots.channels_feed.tg.service
 
 import com.github.badoualy.telegram.api.TelegramClient
 import com.github.badoualy.telegram.tl.api.TLMessage
+import com.github.badoualy.telegram.tl.exception.RpcErrorException
 import com.github.telegram_bots.channels_feed.tg.config.properties.ProcessingProperties
 import com.github.telegram_bots.channels_feed.tg.domain.Channel
 import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPostGroup
 import com.github.telegram_bots.channels_feed.tg.domain.RawPostData
-import com.github.telegram_bots.channels_feed.tg.service.job.*
+import com.github.telegram_bots.channels_feed.tg.service.job.DownloadPostJob
+import com.github.telegram_bots.channels_feed.tg.service.job.ProcessPostJob
+import com.github.telegram_bots.channels_feed.tg.service.job.ResolveChannelJob
+import com.github.telegram_bots.channels_feed.tg.service.job.SendPostToQueueJob
 import com.github.telegram_bots.channels_feed.tg.service.processor.PostProcessor
-import com.github.telegram_bots.channels_feed.tg.util.toExtended
-import io.reactivex.Observable
+import com.github.telegram_bots.channels_feed.tg.util.randomDelay
+import io.reactivex.Completable
+import io.reactivex.Flowable
+import io.reactivex.Maybe
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.zipWith
+import io.reactivex.schedulers.Schedulers
 import mu.KLogging
 import org.springframework.cloud.stream.annotation.EnableBinding
 import org.springframework.cloud.stream.messaging.Source
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 import javax.annotation.PreDestroy
 
 @Service
@@ -30,6 +41,8 @@ class TGPostsUpdater(
 ) {
     companion object : KLogging()
 
+    private val counter = AtomicLong(0)
+    private val executor = Executors.newSingleThreadExecutor({ Thread(it, "tg-post-updater")})
     private var disposable: Disposable? = null
 
     @PreDestroy
@@ -41,88 +54,121 @@ class TGPostsUpdater(
     @Scheduled(fixedDelay = 1000)
     fun run() {
         iterateChannels()
-                .flatMap { resolve(it) }
-                .flatMap { download(it) }
-                .flatMap { prepare(it) }
-                .flatMap { process(it) }
-                .flatMap { sendToQueue(it) }
-                .flatMap { markDownloaded(it) }
-                .doOnSubscribe { disposable = it }
+                .flatMapSingle(this::resolve)
+                .flatMapMaybe(this::download)
+                .flatMapSingle(this::prepare)
+                .flatMap(this::process)
+                .flatMapSingle(this::sendToQueue)
+                .flatMapCompletable(this::markAsDownloaded)
+                .doOnSubscribe(this::onSubscribe)
                 .doOnError(this::onError)
-                .blockingSubscribe()
+                .doOnComplete(this::onComplete)
+                .blockingAwait()
     }
 
-    private fun onError(throwable: Throwable) = logger.error("[ERROR]", throwable)
-
-    private fun iterateChannels(): Observable<Channel> {
-        return Observable.fromCallable(IterateChannelsJob(repository, props.channelsBatchSize))
-                .flatMap { it }
+    private fun iterateChannels(): Flowable<Channel> {
+        return repository.list()
                 .concatMap {
-                    Observable.just(it).toExtended().randomDelay(
-                            props.postsIntervalMin,
-                            props.postsIntervalMax,
-                            props.postsIntervalTimeUnit
-                    )
+                    Single.just(it)
+                            .randomDelay(
+                                    delayMin = props.postsIntervalMin,
+                                    delayMax = props.postsIntervalMax,
+                                    unit = props.postsIntervalTimeUnit,
+                                    scheduler = Schedulers.from(executor)
+                            )
+                            .toFlowable()
                 }
                 .doOnNext { logger.info { "[PROCESS CHANNEL] $it" } }
     }
 
-    private fun resolve(channel: Channel): Observable<Channel> {
-        return Observable.just(channel)
-                .filter { it.isEmpty() }
-                .flatMap {
-                    Single.fromCallable(ResolveChannelJob(client, repository, it))
+    private fun resolve(channel: Channel): Single<Channel> {
+        return Single.just(channel)
+                .filter(Channel::isEmpty)
+                .concatMap { ch ->
+                    Single.fromCallable(ResolveChannelJob(client, repository, ch))
                             .flatMap { it }
-                            .toObservable()
-                            .concatMap {
-                                Observable.just(it).toExtended().randomDelay(
-                                        props.postsIntervalMin,
-                                        props.postsIntervalMax,
-                                        props.postsIntervalTimeUnit
-                                )
-                            }
-                            .doOnNext { logger.info { "[RESOLVE CHANNEL] $it" } }
+                            .randomDelay(
+                                    delayMin = props.channelsIntervalMin,
+                                    delayMax = props.channelsIntervalMax,
+                                    unit = props.channelsIntervalTimeUnit,
+                                    scheduler = Schedulers.from(executor)
+                            )
+                            .retry(this::retry)
+                            .doOnSuccess { logger.info { "[RESOLVE CHANNEL] $ch" } }
+                            .toMaybe()
                 }
-                .defaultIfEmpty(channel)
+                .toSingle(channel)
     }
 
-    private fun download(channel: Channel): Observable<Pair<Channel, List<TLMessage>>> {
-        return Observable.fromCallable(DownloadPostJob(client, channel, props.postsBatchSize))
-                .flatMap { it }
+    private fun download(channel: Channel): Maybe<Pair<Channel, List<TLMessage>>> {
+        return Single.fromCallable(DownloadPostJob(client, channel, props.postsBatchSize))
+                .subscribeOn(Schedulers.from(executor))
+                .retry(this::retry)
+                .flatMapPublisher { it }
                 .toList()
-                .toObservable()
-                .skipWhile { it.isEmpty() }
-                .doOnNext { logger.info { "[DOWNLOAD POSTS] ${it.size}x $channel" } }
-                .map { channel to it }
+                .filter(List<TLMessage>::isNotEmpty)
+                .zipWith(Maybe.just(channel), { msgs, ch -> ch to msgs })
+                .doOnSuccess { (ch, msgs) -> logger.info { "[DOWNLOAD POSTS] ${msgs.size}x $ch" } }
     }
 
-    private fun prepare(pair: Pair<Channel, List<TLMessage>>): Observable<RawPostData> {
-        return Observable.fromIterable(pair.second)
-                .map { RawPostData(it, pair.first) }
-                .doOnSubscribe { logger.info { "[PREPARE POSTS] ${pair.second.size}x ${pair.first}" } }
+    private fun prepare(pair: Pair<Channel, List<TLMessage>>): Single<List<RawPostData>> {
+        val (channel, msgs) = pair
+
+        return Flowable.fromIterable(msgs)
+                .subscribeOn(Schedulers.from(executor))
+                .zipWith(Single.just(channel).repeat())
+                .map { (msg, ch) -> RawPostData(ch, msg) }
+                .toList()
+                .doOnSubscribe { logger.info { "[PREPARE POSTS] ${msgs.size}x $channel" } }
     }
 
-    private fun process(data: RawPostData): Observable<Pair<RawPostData, ProcessedPostGroup>> {
-        return Single.fromCallable(ProcessPostJob(processors, data))
-                .flatMap { it }
-                .map { data to it }
-                .toObservable()
-                .doOnNext { logger.trace { "[PROCESS POST] $data" } }
+    private fun process(list: List<RawPostData>): Flowable<Pair<RawPostData, ProcessedPostGroup>> {
+        return Flowable.fromIterable(list)
+                .flatMapSingle { raw ->
+                    Single.fromCallable(ProcessPostJob(processors, raw))
+                        .subscribeOn(Schedulers.computation())
+                        .flatMap { it }
+                        .zipWith(Single.just(raw), { p, r -> r to p })
+                }
+                .sorted { (_, group1), (_, group2) -> group1.postId.compareTo(group2.postId) }
+                .doOnSubscribe { logger.info { "[PROCESS POSTS] ${list.size}x ${list.firstOrNull()?.channel}" } }
     }
 
-    private fun sendToQueue(pair: Pair<RawPostData, ProcessedPostGroup>): Observable<RawPostData> {
-        return Single.fromCallable(SendPostToQueueJob(source, pair.second))
-                .flatMap { it }
-                .map { pair.first }
-                .toObservable()
-                .doOnNext { logger.trace { "[SEND TO QUEUE] ${pair.second}" } }
+    private fun sendToQueue(pair: Pair<RawPostData, ProcessedPostGroup>): Single<RawPostData> {
+        val (raw, processed) = pair
+
+        return Single.fromCallable(SendPostToQueueJob(source, processed))
+                .subscribeOn(Schedulers.single())
+                .flatMapCompletable { it }
+                .doOnSubscribe { logger.debug { "[SEND TO QUEUE] $processed" } }
+                .andThen(Single.just(raw))
     }
 
-    private fun markDownloaded(data: RawPostData): Observable<Channel> {
-        return Single.fromCallable(UpdateChannelLastPostIDJob(repository, data.channel, data.raw.id))
-                .flatMap { it }
-                .toObservable()
-                .doOnNext { logger.trace { "[MARK DOWNLOADED] $data" } }
+    private fun markAsDownloaded(raw: RawPostData): Completable {
+        return Single.just(raw)
+                .subscribeOn(Schedulers.io())
+                .map { (channel, msg) -> channel.copy(lastPostId = msg.id) }
+                .doOnSuccess{ logger.debug { "[MARK DOWNLOADED] $it" } }
+                .flatMapCompletable(repository::update)
+    }
+
+    private fun onSubscribe(disposable: Disposable) {
+        this.disposable = disposable
+        logger.info { "[START PROCESSING] #${counter.incrementAndGet()}" }
+    }
+
+    private fun onError(throwable: Throwable) = logger.error("[ERROR]", throwable)
+
+    private fun onComplete() = logger.info { "[END PROCESSING] #${counter.get()}" }
+
+    private fun retry(count: Int, throwable: Throwable): Boolean {
+        return when {
+            count < 10 && throwable is RpcErrorException && throwable.code == 420 -> {
+                TimeUnit.SECONDS.sleep(throwable.tagInteger.toLong())
+                return true
+            }
+            else -> false
+        }
     }
 }
 

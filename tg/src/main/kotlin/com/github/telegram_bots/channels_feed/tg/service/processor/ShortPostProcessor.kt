@@ -7,20 +7,21 @@ import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPost.Mode.AS_IS
 import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPost.Mode.HTML
 import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPostGroup.Type.SHORT
 import com.github.telegram_bots.channels_feed.tg.domain.RawPostData
-import com.github.telegram_bots.channels_feed.tg.util.UTF_16LE
 import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
+import java.nio.charset.Charset
 
 @Component
 class ShortPostProcessor : PostProcessor {
     companion object {
         const val MAX_LENGTH: Int = 200
         const val SEPARATOR: String = "\n\n"
+        val UTF_16LE = Charset.forName("UTF-16LE")!!
     }
 
     override val type = SHORT
 
-    override fun process(data: RawPostData) = when (data.raw.media) {
+    override fun process(data: RawPostData) = when (data.message.media) {
         null, is TLInputMediaEmpty -> textPost(data)
         else -> ProcessedPost(mode = AS_IS)
     }
@@ -34,24 +35,24 @@ class ShortPostProcessor : PostProcessor {
     }
 
     private fun processText(link: String?, header: String, data: RawPostData): String {
-        val processed = data.raw
+        val processed = data.message
                 .getMessageOrEmpty()
                 .replaceHTMLTags()
-                .convertEntities(data.raw.entities)
+                .convertEntities(data.message.entities)
 
         return ((link ?: "") + header + processed).shorten(MAX_LENGTH)
     }
 
     private fun makeHeader(data: RawPostData) =
-            """<a href="https://t.me/${data.channel.url}/${data.raw.id}">${data.channel.name}</a>:$SEPARATOR"""
+            """<a href="https://t.me/${data.channel.url}/${data.message.id}">${data.channel.name}</a>:$SEPARATOR"""
 
     private fun extractFirstLink(data: RawPostData): String? {
-        return data.raw.entities
+        return data.message.entities
                 ?.find { it is TLMessageEntityTextUrl || it is TLMessageEntityUrl }
                 ?.let {
                     when (it) {
                         is TLMessageEntityTextUrl -> it.url
-                        is TLMessageEntityUrl -> it.extract(data.raw.getMessageOrEmpty().toByteArray(UTF_16LE))
+                        is TLMessageEntityUrl -> it.extract(data.message.getMessageOrEmpty().toByteArray(UTF_16LE))
                         else -> null
                     }
                 }

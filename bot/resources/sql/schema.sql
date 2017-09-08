@@ -14,7 +14,7 @@ CREATE INDEX IF NOT EXISTS url_index
 CREATE SEQUENCE IF NOT EXISTS user_id_seq;
 CREATE TABLE IF NOT EXISTS Users (
   id           INT PRIMARY KEY DEFAULT nextval('user_id_seq'),
-  telegram_id  INT NOT NULL UNIQUE,
+  telegram_id  BIGINT NOT NULL UNIQUE,
   redirect_url VARCHAR(32)
 );
 

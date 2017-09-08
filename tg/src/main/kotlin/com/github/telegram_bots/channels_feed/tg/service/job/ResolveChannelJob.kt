@@ -6,7 +6,6 @@ import com.github.badoualy.telegram.tl.api.TLInputPeerChannel
 import com.github.telegram_bots.channels_feed.tg.domain.Channel
 import com.github.telegram_bots.channels_feed.tg.service.ChannelRepository
 import io.reactivex.Single
-import io.reactivex.rxkotlin.toSingle
 import java.util.concurrent.Callable
 
 class ResolveChannelJob(
@@ -19,7 +18,6 @@ class ResolveChannelJob(
             resolveChannel(channel)
                     .let(this::resolveLastPostId)
                     .let(this::update)
-                    .toSingle()
         } catch (e: Exception) {
             Single.error(e)
         }
@@ -37,8 +35,8 @@ class ResolveChannelJob(
                             hash = it.accessHash,
                             url = it.username.toLowerCase(),
                             name = it.title,
-                            lastPostId = -1,
-                            lastSentId = null
+                            lastPostId = channel.lastPostId,
+                            lastSentId = channel.lastSentId
                     )
                 }
                 ?: throw NoSuchChannelException(channel)
@@ -60,10 +58,10 @@ class ResolveChannelJob(
                 ?.id
                 ?: throw FailedToResolveLastPostIdException(channel)
 
-        return channel.copy(lastPostId = lastPostId)
+        return channel.copy(lastPostId = lastPostId - 1)
     }
 
-    private fun update(channel: Channel) = repository.update(channel)
+    private fun update(channel: Channel) = repository.update(channel).andThen(Single.just(channel))
 
     class FailedToResolveLastPostIdException(channel: Channel) : RuntimeException("Failed to resolve lastPostId $channel")
 

@@ -19,7 +19,7 @@ class ProcessPostJob(
                     ProcessedPostGroup(
                             channelId = data.channel.id,
                             channelUrl = data.channel.url,
-                            postId = data.raw.id,
+                            postId = data.message.id,
                             posts = it
                     )
                 }

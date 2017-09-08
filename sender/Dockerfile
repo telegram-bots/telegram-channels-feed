@@ -1,8 +1,9 @@
-FROM python:3.6.2-alpine3.6
+FROM openjdk:8-jdk-alpine
+ENV JAVA_OPTS=""
+ENV VERSION="0.0.1"
+VOLUME /tmp
 RUN mkdir /code/
-RUN mkdir -p /data/files/
 WORKDIR /code
-ADD requirements.txt /code/
-RUN apk add --no-cache libpq gcc postgresql-dev musl-dev && pip install -r requirements.txt && apk del gcc postgresql-dev musl-dev
 ADD . /code/
-CMD ["python", "-u", "run.py"]
+RUN ./gradlew --no-daemon clean build && rm -rf $HOME/.gradle
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar build/libs/sender-$VERSION.jar"]

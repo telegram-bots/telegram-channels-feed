@@ -1,11 +1,9 @@
-package com.github.telegram_bots.channels_feed.tg.config
+package com.github.telegram_bots.channels_feed.sender.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.github.badoualy.telegram.api.Kotlogram
-import com.github.badoualy.telegram.api.TelegramApiStorage
-import com.github.badoualy.telegram.api.TelegramApp
-import com.github.badoualy.telegram.api.TelegramClient
-import com.github.telegram_bots.channels_feed.tg.config.properties.TGProperties
+import com.github.telegram_bots.channels_feed.sender.config.properties.SenderProperties
+import com.pengrad.telegrambot.TelegramBot
+import com.pengrad.telegrambot.TelegramBotAdapter
 import org.davidmoten.rx.jdbc.Database
 import org.springframework.boot.autoconfigure.amqp.RabbitProperties
 import org.springframework.context.annotation.Bean
@@ -15,7 +13,7 @@ import org.springframework.core.env.Environment
 import java.net.URI
 
 @Configuration
-class TGConfig {
+class SenderConfig {
     @Bean
     fun objectMapper(): ObjectMapper = ObjectMapper().findAndRegisterModules()
 
@@ -25,7 +23,7 @@ class TGConfig {
     @Bean
     @Primary
     fun rabbitProperties(env: Environment): RabbitProperties {
-        val uri = env.getProperty("spring.rabbitmq.url").let(::URI)
+        val uri = env.getProperty("spring.rabbitmq.url").let { URI(it) }
         val (user, pass) = uri.userInfo?.split(":")
                 .let { it?.getOrNull(0) to it?.getOrNull(1) }
 
@@ -39,19 +37,7 @@ class TGConfig {
     }
 
     @Bean
-    fun telegramApp(props: TGProperties): TelegramApp {
-        return TelegramApp(
-                props.apiId,
-                props.apiHash,
-                props.model,
-                props.sysVersion,
-                props.appVersion,
-                props.langCode
-        )
-    }
-
-    @Bean
-    fun telegramClient(app: TelegramApp, cfgStorage: TelegramApiStorage): TelegramClient {
-        return Kotlogram.getDefaultClient(app, cfgStorage)
+    fun telegramBot(props: SenderProperties): TelegramBot {
+        return TelegramBotAdapter.build(props.botToken)
     }
 }

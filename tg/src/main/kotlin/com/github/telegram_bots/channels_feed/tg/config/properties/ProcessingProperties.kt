@@ -7,7 +7,9 @@ import java.util.concurrent.TimeUnit
 @Configuration
 @ConfigurationProperties("processing")
 data class ProcessingProperties(
-        var channelsBatchSize: Int,
+        var channelsIntervalMin: Long,
+        var channelsIntervalMax: Long,
+        var channelsIntervalTimeUnit: TimeUnit,
         var postsBatchSize: Int,
         var postsIntervalMin: Long,
         var postsIntervalMax: Long,

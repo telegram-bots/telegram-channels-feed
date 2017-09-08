@@ -1,13 +1,11 @@
-package com.github.telegram_bots.channels_feed.tg.domain
-
-import com.github.badoualy.telegram.tl.api.TLMessage
+package com.github.telegram_bots.channels_feed.sender.domain
 
 data class ProcessedPost(
         val text: String? = null,
         val previewEnabled: Boolean = false,
         val mode: Mode
 ) {
-    enum class Mode { AS_IS, TEXT, HTML, MARKDOWN }
+    enum class Mode { AS_IS, TEXT, HTML, Markdown }
 }
 
 data class ProcessedPostGroup(
@@ -18,5 +16,3 @@ data class ProcessedPostGroup(
 ) {
     enum class Type { FULL, SHORT, TITLE_ONLY }
 }
-
-data class RawPostData(val channel: Channel, val message: TLMessage)

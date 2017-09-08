@@ -5,7 +5,7 @@ plugins {
     id "org.springframework.boot" version "1.5.7.RELEASE"
 }
 
-group "com.github.telegram_bots.channels_feed.tg"
+group "com.github.telegram_bots.channels_feed.sender"
 version "0.0.1"
 
 repositories {
@@ -34,9 +34,7 @@ dependencies {
     }
 
     // Telegram
-    compile("com.github.badoualy:kotlogram:5f8590d") {
-        exclude module: "slf4j-simple"
-    }
+    compile("com.github.pengrad:java-telegram-bot-api:3.3.0")
 
     // Jackson
     compile("com.fasterxml.jackson.module:jackson-module-kotlin:2.8.10")

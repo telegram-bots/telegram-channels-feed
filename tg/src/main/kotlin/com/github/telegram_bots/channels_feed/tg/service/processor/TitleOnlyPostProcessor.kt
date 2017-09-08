@@ -13,5 +13,5 @@ class TitleOnlyPostProcessor : PostProcessor {
     override fun process(data: RawPostData) = ProcessedPost(makeHeader(data), previewEnabled = false, mode = HTML)
 
     private fun makeHeader(data: RawPostData) =
-        """<b>new in</b> <a href="https://t.me/${data.channel.url}/${data.raw.id}">${data.channel.name}</a>"""
+        """<b>new in</b> <a href="https://t.me/${data.channel.url}/${data.message.id}">${data.channel.name}</a>"""
 }

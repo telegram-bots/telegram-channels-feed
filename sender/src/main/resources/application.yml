@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: sender
+  rabbitmq:
+    url: ${CF_RABBIT_URL}
+  cloud:
+    stream:
+      rabbit:
+        bindings:
+          input:
+            consumer:
+              transacted: true
+              requeueRejected: true
+      bindings:
+        input:
+          consumer:
+            maxAttempts: 1
+          group: posts
+          destination: channels_feed.posts
+          content-type: application/json
+  datasource:
+    url: jdbc:${CF_DB_URL}
+
+
+sender:
+  bot-token: ${CF_BOT_TOKEN}

@@ -1,11 +1,8 @@
 spring:
   application:
     name: tg
-  jackson:
-    serialization:
-      write-dates-as-timestamps: false
-    time-zone: Europe/Moscow
-    date-format: yyyy-MM-dd'T'HH:mm:ssZ
+  rabbitmq:
+    url: ${CF_RABBIT_URL}
   cloud:
     stream:
       bindings:
@@ -15,6 +12,8 @@ spring:
               - posts
           destination: channels_feed.posts
           content-type: application/json
+  datasource:
+    url: jdbc:${CF_DB_URL}
 
 tg:
   api-id: ${CF_TG_API_ID}
@@ -24,11 +23,13 @@ tg:
   app-version: ${VERSION}
   sys-version: ${VERSION}
   lang-code: en
-  storage-path: ${java.io.tmpdir}
+  storage-path: ${user.home}/.telegram-channels-feed/tg
 
 processing:
-  channels-batch-size: 10
+  channels-interval-min: 60
+  channels-interval-max: 120
+  channels-interval-time-unit: SECONDS
   posts-batch-size: 50
-  posts-interval-min: 10
-  posts-interval-max: 60
+  posts-interval-min: 5
+  posts-interval-max: 15
   posts-interval-time-unit: SECONDS
