@@ -24,3 +24,5 @@ spring:
 
 sender:
   bot-token: ${CF_BOT_TOKEN}
+  rate-limit: 33
+  rate-limit-unit: MILLISECONDS

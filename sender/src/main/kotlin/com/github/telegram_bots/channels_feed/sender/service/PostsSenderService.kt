@@ -1,5 +1,6 @@
 package com.github.telegram_bots.channels_feed.sender.service
 
+import com.github.telegram_bots.channels_feed.sender.config.properties.SenderProperties
 import com.github.telegram_bots.channels_feed.sender.domain.*
 import com.github.telegram_bots.channels_feed.sender.domain.ProcessedPost.Mode.AS_IS
 import com.github.telegram_bots.channels_feed.sender.domain.ProcessedPostGroup.Type
@@ -14,22 +15,23 @@ import com.pengrad.telegrambot.request.ForwardMessage
 import com.pengrad.telegrambot.request.SendMessage
 import com.pengrad.telegrambot.response.BaseResponse
 import io.reactivex.Flowable
+import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.rxkotlin.zipWith
 import io.reactivex.schedulers.Schedulers
 import mu.KLogging
 import org.reactivestreams.Subscription
-import org.springframework.amqp.core.AcknowledgeMode
 import org.springframework.cloud.stream.annotation.EnableBinding
 import org.springframework.cloud.stream.annotation.StreamListener
 import org.springframework.cloud.stream.messaging.Sink
 import org.springframework.stereotype.Service
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.*;
 import javax.annotation.PreDestroy
 
 @Service
 @EnableBinding(Sink::class)
 class PostsSenderService(
+        private val props: SenderProperties,
         private val bot: TelegramBot,
         private val notifications: NotificationsService
 ) {
@@ -45,6 +47,7 @@ class PostsSenderService(
         enableExceptionPropagate()
 
         Single.just(group)
+                .delay(props.rateLimit, props.rateLimitUnit)
                 .flatMapPublisher { getNotNotified(it) }
                 .flatMapSingle { preparePost(it) }
                 .flatMapSingle { sendPost(it) }
@@ -95,8 +98,12 @@ class PostsSenderService(
 
     private fun sendPost(data: RequestData): Single<PostData> {
         fun BaseResponse.checkStatus(): BaseResponse {
-            if (isOk || errorCode() == 403) return this
-            else throw TelegramException(errorCode(), description())
+            return when {
+                isOk -> this
+                errorCode() == 403 -> this
+                errorCode() == 400 && description() == "Bad Request: message to forward not found" -> this
+                else -> throw TelegramException(errorCode(), description())
+            }
         }
 
         val (info, request) = data
@@ -107,9 +114,9 @@ class PostsSenderService(
                 .doOnError { logger.warn { "[SEND ERROR] ${it.message}" } }
                 .retryWhen(RetryWithDelay(
                         tries = 10,
-                        delay = 5 to TimeUnit.SECONDS,
+                        delay = 5 to SECONDS,
                         backOff = 2.0,
-                        maxDelay = 30 to TimeUnit.SECONDS
+                        maxDelay = 30 to SECONDS
                 ))
                 .zipWith(Single.just(info), { _, i -> i })
     }
