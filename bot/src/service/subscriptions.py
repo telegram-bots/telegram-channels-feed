@@ -64,6 +64,10 @@ class Subscriptions:
 
             subs_left = subscription_repository.remove(user_id=user.id, channel_id=channel.id)
             if subs_left == 0:
+                preserved_channel = Channel()
+                preserved_channel.name = channel.name
+                preserved_channel.url = channel.url
+                channel = preserved_channel
                 channel_repository.remove(command.channel_url)
 
             return channel
