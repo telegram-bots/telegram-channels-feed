@@ -3,6 +3,7 @@ import logging
 from telegram import Update
 from telegram.ext import Handler
 from telegram.ext.dispatcher import run_async
+from retry import retry
 from typing import Tuple, Optional, List
 
 from src.domain.command import Command
@@ -28,6 +29,7 @@ class CommandHandler(Handler):
         return self.callback(dispatcher.bot, update, **optional_args)
 
     @run_async
+    @retry(tries=5, delay=1)
     def handle(self, bot, update):
         info = self.get_info(bot=bot, message=update.message)
         data = Command(update.message, *info)

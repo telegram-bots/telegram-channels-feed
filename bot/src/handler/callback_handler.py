@@ -1,6 +1,7 @@
 from src.domain.callback import Callback
 from telegram.ext import CallbackQueryHandler
 from telegram.ext.dispatcher import run_async
+from retry import retry
 
 
 class CallbackHandler(CallbackQueryHandler):
@@ -8,6 +9,7 @@ class CallbackHandler(CallbackQueryHandler):
         super(CallbackHandler, self).__init__(self.handle)
 
     @run_async
+    @retry(tries=5, delay=1)
     def handle(self, bot, update):
         cb = Callback(update)
 
