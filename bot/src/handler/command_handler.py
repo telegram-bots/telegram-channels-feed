@@ -53,6 +53,6 @@ class CommandHandler(Handler):
         info = bot.get_chat(f"@{url}") if url is not None else None
 
         if info is not None and info.type == 'channel':
-            return info.username, info.title, args
+            return info.username.lower(), info.title, args
 
         return None, None, args
