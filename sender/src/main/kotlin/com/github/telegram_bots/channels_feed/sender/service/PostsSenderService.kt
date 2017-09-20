@@ -15,7 +15,6 @@ import com.pengrad.telegrambot.request.ForwardMessage
 import com.pengrad.telegrambot.request.SendMessage
 import com.pengrad.telegrambot.response.BaseResponse
 import io.reactivex.Flowable
-import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.rxkotlin.zipWith
 import io.reactivex.schedulers.Schedulers
@@ -105,6 +104,10 @@ class PostsSenderService(
                 else -> throw TelegramException(errorCode(), description())
             }
         }
+        val handler = object : RetryWithDelay.Handler {
+            override fun accepts(throwable: Throwable) = throwable is TelegramException && throwable.code == 429
+            override fun handle(throwable: Throwable) = Flowable.timer((throwable as TelegramException).value, SECONDS)
+        }
 
         val (info, request) = data
 
@@ -116,7 +119,8 @@ class PostsSenderService(
                         tries = 10,
                         delay = 5 to SECONDS,
                         backOff = 2.0,
-                        maxDelay = 30 to SECONDS
+                        maxDelay = 30 to SECONDS,
+                        handler = handler
                 ))
                 .zipWith(Single.just(info), { _, i -> i })
     }
@@ -144,6 +148,8 @@ class PostsSenderService(
 
     private fun enableExceptionPropagate() = Thread.currentThread().setUncaughtExceptionHandler { _, e -> throw e }
 
-    private class TelegramException(code: Int, description: String)
-        : RuntimeException("[$code] $description", null, false, false)
+    private class TelegramException(val code: Int, val description: String)
+        : RuntimeException("[$code] $description", null, false, false) {
+        val value: Long = description.split(" ").lastOrNull()?.toLongOrNull() ?: 0
+    }
 }
