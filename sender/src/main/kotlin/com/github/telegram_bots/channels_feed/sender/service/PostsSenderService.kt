@@ -5,6 +5,7 @@ import com.github.telegram_bots.channels_feed.sender.domain.*
 import com.github.telegram_bots.channels_feed.sender.domain.ProcessedPost.Mode.AS_IS
 import com.github.telegram_bots.channels_feed.sender.domain.ProcessedPostGroup.Type
 import com.github.telegram_bots.channels_feed.sender.domain.ProcessedPostGroup.Type.FULL
+import com.github.telegram_bots.channels_feed.sender.exception.TelegramException
 import com.github.telegram_bots.channels_feed.sender.util.RetryWithDelay
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton
@@ -24,7 +25,7 @@ import org.springframework.cloud.stream.annotation.EnableBinding
 import org.springframework.cloud.stream.annotation.StreamListener
 import org.springframework.cloud.stream.messaging.Sink
 import org.springframework.stereotype.Service
-import java.util.concurrent.TimeUnit.*;
+import java.util.concurrent.TimeUnit.*
 import javax.annotation.PreDestroy
 
 @Service
@@ -96,31 +97,16 @@ class PostsSenderService(
     }
 
     private fun sendPost(data: RequestData): Single<PostData> {
-        fun BaseResponse.checkStatus(): BaseResponse {
-            return when {
-                isOk -> this
-                errorCode() == 403 -> this
-                errorCode() == 400 && description() == "Bad Request: message to forward not found" -> this
-                else -> throw TelegramException(errorCode(), description())
-            }
-        }
-        val handler = object : RetryWithDelay.Handler {
-            override fun accepts(throwable: Throwable) = throwable is TelegramException && throwable.code == 429
-            override fun handle(throwable: Throwable) = Flowable.timer((throwable as TelegramException).value, SECONDS)
-        }
-
         val (info, request) = data
 
         return Single.just(request)
-                .map { bot.execute(it) }
-                .map(BaseResponse::checkStatus)
-                .doOnError { logger.warn { "[SEND ERROR] ${it.message}" } }
+                .map { it to bot.execute(it) }
+                .map(this::handleErrors)
                 .retryWhen(RetryWithDelay(
                         tries = 10,
                         delay = 5 to SECONDS,
                         backOff = 2.0,
-                        maxDelay = 30 to SECONDS,
-                        handler = handler
+                        maxDelay = 30 to SECONDS
                 ))
                 .zipWith(Single.just(info), { _, i -> i })
     }
@@ -146,10 +132,24 @@ class PostsSenderService(
         throw throwable
     }
 
-    private fun enableExceptionPropagate() = Thread.currentThread().setUncaughtExceptionHandler { _, e -> throw e }
+    private fun handleErrors(data: Pair<BaseRequest<*, *>, BaseResponse>): Single<Pair<BaseRequest<*, *>, BaseResponse>> {
+        if (data.second.isOk) return Single.just(data)
+        val (req, res) = data
+        val error = TelegramException(req, res)
 
-    private class TelegramException(val code: Int, val description: String)
-        : RuntimeException("[$code] $description", null, false, false) {
-        val value: Long = description.split(" ").lastOrNull()?.toLongOrNull() ?: 0
+        logger.warn { "[SEND ERROR] ${error.message}" }
+
+        return when (error.code) {
+            403 -> Single.just(data)
+            400 -> when (error.description) {
+                "Bad Request: message to forward not found" -> Single.just(data)
+                "Bad Request: chat not found" -> Single.just(data)
+                else -> Single.error(error)
+            }
+            429 -> Single.error<Pair<BaseRequest<*, *>, BaseResponse>>(error).delay(error.value / 2, SECONDS)
+            else -> Single.error(error)
+        }
     }
+
+    private fun enableExceptionPropagate() = Thread.currentThread().setUncaughtExceptionHandler { _, e -> throw e }
 }
