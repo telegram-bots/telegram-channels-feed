@@ -42,7 +42,7 @@ services:
     restart: unless-stopped
 
   db:
-    image: "healthcheck/postgres:alpine"
+    build: ./init/db
     volumes:
       - ~/.telegram-channels-feed/db:/var/lib/postgresql/data
     ports:
@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
 
   rabbit:
-    image: "rednblack/rabbitmq"
+    build: ./init/rabbit
     hostname: rabbit
     volumes:
       - ~/.telegram-channels-feed/rabbitmq:/var/lib/rabbitmq

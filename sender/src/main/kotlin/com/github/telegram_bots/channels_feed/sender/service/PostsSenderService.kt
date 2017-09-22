@@ -101,7 +101,7 @@ class PostsSenderService(
 
         return Single.just(request)
                 .map { it to bot.execute(it) }
-                .map(this::handleErrors)
+                .flatMap(this::handleErrors)
                 .retryWhen(RetryWithDelay(
                         tries = 10,
                         delay = 5 to SECONDS,
