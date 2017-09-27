@@ -1,7 +1,7 @@
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.1.4-3"
-    id "org.jetbrains.kotlin.plugin.spring" version "1.1.4-3"
-    id "org.jetbrains.kotlin.plugin.noarg" version "1.1.4-3"
+    id "org.jetbrains.kotlin.jvm" version "1.1.50"
+    id "org.jetbrains.kotlin.plugin.spring" version "1.1.50"
+    id "org.jetbrains.kotlin.plugin.noarg" version "1.1.50"
     id "org.springframework.boot" version "1.5.7.RELEASE"
 }
 
@@ -10,7 +10,6 @@ version "0.0.1"
 
 repositories {
     mavenLocal()
-    mavenCentral()
     jcenter()
     maven { url "https://jitpack.io" }
 }
@@ -26,7 +25,7 @@ dependencyManagement {
 }
 
 dependencies {
-    compile("org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.4-3")
+    compile("org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.50")
 
     // Rabbit
     compile("org.springframework.cloud:spring-cloud-starter-stream-rabbit") {
