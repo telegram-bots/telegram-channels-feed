@@ -14,7 +14,6 @@ import com.pengrad.telegrambot.model.request.ParseMode
 import com.pengrad.telegrambot.request.BaseRequest
 import com.pengrad.telegrambot.request.ForwardMessage
 import com.pengrad.telegrambot.request.SendMessage
-import com.pengrad.telegrambot.response.BaseResponse
 import io.reactivex.Flowable
 import io.reactivex.Single
 import io.reactivex.rxkotlin.zipWith
@@ -97,10 +96,8 @@ class PostsSenderService(
     }
 
     private fun sendPost(data: RequestData): Single<PostData> {
-        val (info, request) = data
-
-        return Single.just(request)
-                .map { it to bot.execute(it) }
+        return Single.just(data)
+                .map { it to bot.execute(it.second) }
                 .flatMap(this::handleErrors)
                 .retryWhen(RetryWithDelay(
                         tries = 10,
@@ -108,7 +105,7 @@ class PostsSenderService(
                         backOff = 2.0,
                         maxDelay = 30 to SECONDS
                 ))
-                .zipWith(Single.just(info), { _, i -> i })
+                .map { (req) -> req.first }
     }
 
     private fun markSubscription(data: PostData) {
@@ -132,10 +129,10 @@ class PostsSenderService(
         throw throwable
     }
 
-    private fun handleErrors(data: Pair<BaseRequest<*, *>, BaseResponse>): Single<Pair<BaseRequest<*, *>, BaseResponse>> {
-        if (data.second.isOk) return Single.just(data)
+    private fun handleErrors(data: ExchangeData): Single<ExchangeData> {
         val (req, res) = data
-        val error = TelegramException(req, res)
+        if (res.isOk) return Single.just(data)
+        val error = TelegramException(req.second, res)
 
         logger.warn { "[SEND ERROR] ${error.message}" }
 
@@ -146,7 +143,7 @@ class PostsSenderService(
                 "Bad Request: chat not found" -> Single.just(data)
                 else -> Single.error(error)
             }
-            429 -> Single.error<Pair<BaseRequest<*, *>, BaseResponse>>(error).delay(error.value / 2, SECONDS)
+            429 -> Single.timer(error.value / 2, SECONDS).flatMap { Single.error<ExchangeData>(error) }
             else -> Single.error(error)
         }
     }
