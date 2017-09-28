@@ -23,7 +23,7 @@ tg:
   app-version: ${VERSION}
   sys-version: ${VERSION}
   lang-code: en
-  storage-path: ${user.home}/.telegram-channels-feed/tg
+  storage-path: ${java.io.tmpdir}
 
 processing:
   channels-interval-min: 60

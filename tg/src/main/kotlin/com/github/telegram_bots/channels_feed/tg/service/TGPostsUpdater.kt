@@ -23,11 +23,10 @@ import io.reactivex.schedulers.Schedulers
 import mu.KLogging
 import org.springframework.cloud.stream.annotation.EnableBinding
 import org.springframework.cloud.stream.messaging.Source
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicLong
+import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 
 @Service
@@ -41,7 +40,6 @@ class TGPostsUpdater(
 ) {
     companion object : KLogging()
 
-    private val counter = AtomicLong(0)
     private val executor = Executors.newSingleThreadExecutor({ Thread(it, "tg-post-updater")})
     private var disposable: Disposable? = null
 
@@ -51,7 +49,7 @@ class TGPostsUpdater(
         client.close()
     }
 
-    @Scheduled(fixedDelay = 1000)
+    @PostConstruct
     fun run() {
         iterateChannels()
                 .flatMapSingle(this::resolve)
@@ -62,12 +60,13 @@ class TGPostsUpdater(
                 .flatMapCompletable(this::markAsDownloaded)
                 .doOnSubscribe(this::onSubscribe)
                 .doOnError(this::onError)
-                .doOnComplete(this::onComplete)
-                .blockingAwait()
+                .doOnTerminate(this::onTerminate)
+                .subscribe()
     }
 
     private fun iterateChannels(): Flowable<Channel> {
         return repository.list()
+                .repeatWhen { it.delay(1, TimeUnit.SECONDS) }
                 .concatMap {
                     Single.just(it)
                             .randomDelay(
@@ -154,17 +153,17 @@ class TGPostsUpdater(
 
     private fun onSubscribe(disposable: Disposable) {
         this.disposable = disposable
-        logger.info { "[START PROCESSING] #${counter.incrementAndGet()}" }
+        logger.info { "[START PROCESSING]" }
     }
 
     private fun onError(throwable: Throwable) = logger.error("[ERROR]", throwable)
 
-    private fun onComplete() = logger.info { "[END PROCESSING] #${counter.get()}" }
+    private fun onTerminate() = logger.info { "[STOP PROCESSING]" }
 
     private fun retry(count: Int, throwable: Throwable): Boolean {
         return when {
             count < 10 && throwable is RpcErrorException && throwable.code == 420 -> {
-                TimeUnit.SECONDS.sleep(throwable.tagInteger.toLong())
+                TimeUnit.SECONDS.sleep(throwable.tagInteger.toLong() / 2)
                 return true
             }
             else -> false
