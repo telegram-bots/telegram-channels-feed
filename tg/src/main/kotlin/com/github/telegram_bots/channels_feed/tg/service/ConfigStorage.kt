@@ -11,7 +11,7 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
 
 @Component
-class TGConfigStorage(private val props: TGProperties) : TelegramApiStorage {
+class ConfigStorage(private val props: TGProperties) : TelegramApiStorage {
     private val auth = "auth".prepare()
     private val separator = "\uD83D\uDD24"
 

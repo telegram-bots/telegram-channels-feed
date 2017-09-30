@@ -1,4 +1,4 @@
-package com.github.telegram_bots.channels_feed.tg.service
+package com.github.telegram_bots.channels_feed.tg.service.updater
 
 import com.github.badoualy.telegram.api.TelegramClient
 import com.github.badoualy.telegram.tl.api.TLMessage
@@ -7,10 +7,8 @@ import com.github.telegram_bots.channels_feed.tg.config.properties.ProcessingPro
 import com.github.telegram_bots.channels_feed.tg.domain.Channel
 import com.github.telegram_bots.channels_feed.tg.domain.ProcessedPostGroup
 import com.github.telegram_bots.channels_feed.tg.domain.RawPostData
-import com.github.telegram_bots.channels_feed.tg.service.job.DownloadPostJob
-import com.github.telegram_bots.channels_feed.tg.service.job.ProcessPostJob
-import com.github.telegram_bots.channels_feed.tg.service.job.ResolveChannelJob
-import com.github.telegram_bots.channels_feed.tg.service.job.SendPostToQueueJob
+import com.github.telegram_bots.channels_feed.tg.service.ChannelRepository
+import com.github.telegram_bots.channels_feed.tg.service.job.*
 import com.github.telegram_bots.channels_feed.tg.service.processor.PostProcessor
 import com.github.telegram_bots.channels_feed.tg.util.randomDelay
 import io.reactivex.Completable
@@ -24,34 +22,28 @@ import mu.KLogging
 import org.springframework.cloud.stream.annotation.EnableBinding
 import org.springframework.cloud.stream.messaging.Source
 import org.springframework.stereotype.Service
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 
 @Service
 @EnableBinding(Source::class)
-class TGPostsUpdater(
+class PostsUpdater(
         private val props: ProcessingProperties,
         private val client: TelegramClient,
         private val source: Source,
         private val repository: ChannelRepository,
         private val processors: Collection<PostProcessor>
-) {
+) : AbstractUpdater("posts-updater") {
     companion object : KLogging()
 
-    private val executor = Executors.newSingleThreadExecutor({ Thread(it, "tg-post-updater")})
-    private var disposable: Disposable? = null
-
     @PreDestroy
-    fun onDestroy() {
-        disposable?.dispose()
+    override fun onDestroy() {
+        super.onDestroy()
         client.close()
     }
 
-    @PostConstruct
-    fun run() {
-        iterateChannels()
+    override fun run(): Completable {
+        return iterateChannels()
                 .flatMapSingle(this::resolve)
                 .flatMapMaybe(this::download)
                 .flatMapSingle(this::prepare)
@@ -59,9 +51,7 @@ class TGPostsUpdater(
                 .flatMapSingle(this::sendToQueue)
                 .flatMapCompletable(this::markAsDownloaded)
                 .doOnSubscribe(this::onSubscribe)
-                .doOnError(this::onError)
                 .doOnTerminate(this::onTerminate)
-                .subscribe()
     }
 
     private fun iterateChannels(): Flowable<Channel> {
@@ -73,7 +63,7 @@ class TGPostsUpdater(
                                     delayMin = props.postsIntervalMin,
                                     delayMax = props.postsIntervalMax,
                                     unit = props.postsIntervalTimeUnit,
-                                    scheduler = Schedulers.from(executor)
+                                    scheduler = scheduler
                             )
                             .toFlowable()
                 }
@@ -81,40 +71,45 @@ class TGPostsUpdater(
     }
 
     private fun resolve(channel: Channel): Single<Channel> {
-        return Single.just(channel)
+        return Maybe.just(channel)
                 .filter(Channel::isEmpty)
                 .concatMap { ch ->
-                    Single.fromCallable(ResolveChannelJob(client, repository, ch))
-                            .flatMap { it }
+                    Single.just(ch)
                             .randomDelay(
                                     delayMin = props.channelsIntervalMin,
                                     delayMax = props.channelsIntervalMax,
                                     unit = props.channelsIntervalTimeUnit,
-                                    scheduler = Schedulers.from(executor)
+                                    scheduler = scheduler
                             )
+                            .flatMap(ResolveChannelInfoJob(client))
+                            .flatMap(ResolveChannelCreationDateJob(client))
+                            .flatMap(ResolveChannelLastPostIdJob(client))
+                            .flatMap { repository.update(it).andThen(Single.just(it)) }
                             .retry(this::retry)
                             .doOnSuccess { logger.info { "[RESOLVE CHANNEL] $ch" } }
+                            .doOnSubscribe { client.accountUpdateStatus(false) }
+                            .doOnSuccess { client.accountUpdateStatus(true) }
                             .toMaybe()
                 }
                 .toSingle(channel)
     }
 
     private fun download(channel: Channel): Maybe<Pair<Channel, List<TLMessage>>> {
-        return Single.fromCallable(DownloadPostJob(client, channel, props.postsBatchSize))
-                .subscribeOn(Schedulers.from(executor))
+        return Single.just(channel)
                 .retry(this::retry)
-                .flatMapPublisher { it }
+                .flatMapPublisher(DownloadPostsJob(client, props.postsBatchSize))
                 .toList()
                 .filter(List<TLMessage>::isNotEmpty)
                 .zipWith(Maybe.just(channel), { msgs, ch -> ch to msgs })
                 .doOnSuccess { (ch, msgs) -> logger.info { "[DOWNLOAD POSTS] ${msgs.size}x $ch" } }
+                .doOnSubscribe { client.accountUpdateStatus(false) }
+                .doOnComplete { client.accountUpdateStatus(true) }
     }
 
     private fun prepare(pair: Pair<Channel, List<TLMessage>>): Single<List<RawPostData>> {
         val (channel, msgs) = pair
 
         return Flowable.fromIterable(msgs)
-                .subscribeOn(Schedulers.from(executor))
                 .zipWith(Single.just(channel).repeat())
                 .map { (msg, ch) -> RawPostData(ch, msg) }
                 .toList()
@@ -124,10 +119,10 @@ class TGPostsUpdater(
     private fun process(list: List<RawPostData>): Flowable<Pair<RawPostData, ProcessedPostGroup>> {
         return Flowable.fromIterable(list)
                 .flatMapSingle { raw ->
-                    Single.fromCallable(ProcessPostJob(processors, raw))
-                        .subscribeOn(Schedulers.computation())
-                        .flatMap { it }
-                        .zipWith(Single.just(raw), { p, r -> r to p })
+                    Single.just(raw)
+                            .subscribeOn(Schedulers.computation())
+                            .flatMap(ProcessPostJob(processors))
+                            .zipWith(Single.just(raw), { p, r -> r to p })
                 }
                 .sorted { (_, group1), (_, group2) -> group1.postId.compareTo(group2.postId) }
                 .doOnSubscribe { logger.info { "[PROCESS POSTS] ${list.size}x ${list.firstOrNull()?.channel}" } }
@@ -136,9 +131,9 @@ class TGPostsUpdater(
     private fun sendToQueue(pair: Pair<RawPostData, ProcessedPostGroup>): Single<RawPostData> {
         val (raw, processed) = pair
 
-        return Single.fromCallable(SendPostToQueueJob(source, processed))
+        return Single.just(processed)
                 .subscribeOn(Schedulers.single())
-                .flatMapCompletable { it }
+                .flatMapCompletable(SendPostToQueueJob(source))
                 .doOnSubscribe { logger.debug { "[SEND TO QUEUE] $processed" } }
                 .andThen(Single.just(raw))
     }
@@ -147,16 +142,11 @@ class TGPostsUpdater(
         return Single.just(raw)
                 .subscribeOn(Schedulers.io())
                 .map { (channel, msg) -> channel.copy(lastPostId = msg.id) }
-                .doOnSuccess{ logger.debug { "[MARK DOWNLOADED] $it" } }
+                .doOnSuccess { logger.debug { "[MARK DOWNLOADED] $it" } }
                 .flatMapCompletable(repository::update)
     }
 
-    private fun onSubscribe(disposable: Disposable) {
-        this.disposable = disposable
-        logger.info { "[START PROCESSING]" }
-    }
-
-    private fun onError(throwable: Throwable) = logger.error("[ERROR]", throwable)
+    private fun onSubscribe(disposable: Disposable) = logger.info { "[START PROCESSING]" }
 
     private fun onTerminate() = logger.info { "[STOP PROCESSING]" }
 

@@ -1,6 +1,7 @@
 package com.github.telegram_bots.channels_feed.tg.domain
 
 import java.sql.ResultSet
+import java.time.Instant
 
 data class Channel(
         val id: Int,
@@ -9,7 +10,8 @@ data class Channel(
         val url: String,
         val name: String,
         val lastPostId: Int,
-        val lastSentId: Int?
+        val lastSentId: Int?,
+        val createdAt: Instant
 ) {
     companion object {
         const val EMPTY_TG_ID = -1
@@ -18,13 +20,14 @@ data class Channel(
     }
 
     constructor(rs: ResultSet) : this(
-        id = rs.getInt("id"),
-        telegramId = rs.getObject("telegram_id")?.let { it as? Int } ?: EMPTY_TG_ID,
-        hash = rs.getObject("hash")?.let { it as? Long } ?: EMPTY_HASH,
-        url = rs.getString("url"),
-        name = rs.getString("name"),
-        lastPostId = rs.getObject("last_post_id")?.let { it as? Int } ?: EMPTY_LAST_POST_ID,
-        lastSentId = rs.getObject("last_sent_id")?.let { it as? Int }
+            id = rs.getInt("id"),
+            telegramId = rs.getObject("telegram_id")?.let { it as? Int } ?: EMPTY_TG_ID,
+            hash = rs.getObject("hash")?.let { it as? Long } ?: EMPTY_HASH,
+            url = rs.getString("url"),
+            name = rs.getString("name"),
+            lastPostId = rs.getObject("last_post_id")?.let { it as? Int } ?: EMPTY_LAST_POST_ID,
+            lastSentId = rs.getObject("last_sent_id")?.let { it as? Int },
+            createdAt = rs.getTimestamp("created_at").toInstant()
     )
 
     fun isEmpty() = telegramId == EMPTY_TG_ID
