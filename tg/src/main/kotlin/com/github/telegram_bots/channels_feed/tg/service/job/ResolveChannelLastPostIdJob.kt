@@ -11,13 +11,14 @@ import io.reactivex.functions.Function
 class ResolveChannelLastPostIdJob(private val client: TelegramClient) : Function<Channel, Single<Channel>> {
     override fun apply(channel: Channel): Single<Channel> {
         return Single.just(channel)
+                .filter { it.lastPostId == Channel.EMPTY_LAST_POST_ID }
                 .map { TLInputPeerChannel(channel.telegramId, channel.hash) }
                 .map { client.messagesGetHistory(it, 0, 0, 0,1, -1, 1) }
                 .flattenAsObservable(TLAbsMessages::getMessages)
                 .map(TLAbsMessage::getId)
                 .map { channel.copy(lastPostId = it - 1) }
-                .singleOrError()
                 .onErrorReturn { throw FailedToResolveLastPostIdException(channel) }
+                .single(channel)
     }
 
     class FailedToResolveLastPostIdException(channel: Channel) : RuntimeException(
