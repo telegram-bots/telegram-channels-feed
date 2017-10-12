@@ -4,7 +4,7 @@ import com.pengrad.telegrambot.request.BaseRequest
 import com.pengrad.telegrambot.response.BaseResponse
 
 class TelegramException(request: BaseRequest<*, *>, response: BaseResponse)
-    : RuntimeException("[${response.errorCode()}] ${response.description()} $request", null, false, false) {
+    : RuntimeException("[${response.errorCode()}] ${response.description()} ${request.parameters}", null, false, false) {
     val code = response.errorCode()
     val description = response.description()
     val value: Long = response.description().split(" ").lastOrNull()?.toLongOrNull() ?: 1
