@@ -70,26 +70,23 @@ class PostsSenderService(
         fun ProcessedPostGroup.getPost(type: Type): ProcessedPost {
             return posts.getOrElse(type, { throw IllegalStateException("Impossible to happen") })
         }
-        fun ProcessedPost.buildRequest(chatId: Any, group: ProcessedPostGroup): BaseRequest<*, *> {
-            return when (mode) {
-                AS_IS -> ForwardMessage(chatId, "@${group.channelUrl}", group.postId)
-                else -> SendMessage(chatId, text)
-                        .disableWebPagePreview(!previewEnabled)
-                        .parseMode(ParseMode.valueOf(mode.name))
-                        .replyMarkup(
-                                InlineKeyboardMarkup(arrayOf(
-                                        InlineKeyboardButton("Mark as read")
-                                                .callbackData("mark")
-                                ))
-                        )
-            }
+        fun ProcessedPost.buildRequest(chatId: Any): BaseRequest<*, *> {
+            return SendMessage(chatId, text)
+                    .disableWebPagePreview(!previewEnabled)
+                    .parseMode(ParseMode.valueOf(mode.name))
+                    .replyMarkup(
+                            InlineKeyboardMarkup(arrayOf(
+                                    InlineKeyboardButton("Mark as read")
+                                            .callbackData("mark")
+                            ))
+                    )
         }
 
         return Single.just(data)
                 .map { (user, group) ->
                     val post = group.getPost(FULL)
                     val chatId = user.getChatId()
-                    val request = post.buildRequest(chatId, group)
+                    val request = post.buildRequest(chatId)
 
                     (user to group) to request
                 }
