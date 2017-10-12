@@ -26,12 +26,8 @@ class ShortPostProcessor : PostProcessor {
     private fun textPost(data: RawPostData): ProcessedPost {
         val firstLink = formatter.extractFirstLink(data)
         val header = formatter.makeHeader(data)
-        val text = formatter.processText(firstLink, header, data).shorten(MAX_LENGTH)
+        val text = formatter.processText(firstLink, header, data, MAX_LENGTH)
 
         return ProcessedPost(text = text, previewEnabled = firstLink != null, mode = HTML)
     }
-
-    private fun String.shorten(limit: Int, placeholder: String = "...") =
-            if (length <= limit) this
-            else substring(0, limit - placeholder.length) + placeholder
 }

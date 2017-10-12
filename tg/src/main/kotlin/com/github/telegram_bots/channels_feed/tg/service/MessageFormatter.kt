@@ -10,11 +10,12 @@ object MessageFormatter {
     private const val SEPARATOR: String = "\n\n"
     private val UTF_16LE = Charset.forName("UTF-16LE")!!
 
-    fun processText(link: String?, header: String, data: RawPostData): String {
+    fun processText(link: String?, header: String, data: RawPostData, maxLength: Int): String {
         val processed = data.message
                 .getMessageOrEmpty()
                 .replaceHTMLTags()
                 .convertEntities(data.message.entities)
+                .shorten(maxLength)
 
         return ((link ?: "") + header + processed)
     }
@@ -56,6 +57,10 @@ object MessageFormatter {
                 .toByteArray()
                 .let { String(it, UTF_16LE) }
     }
+
+    private fun String.shorten(limit: Int, placeholder: String = "...") =
+            if (length <= limit) this
+            else substring(0, limit - placeholder.length) + placeholder
 
     private fun String.replaceHTMLTags() = replace("<", "&lt;")
             .replace(">", "&gt;")
